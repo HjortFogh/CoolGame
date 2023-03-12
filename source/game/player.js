@@ -1,31 +1,23 @@
-// Player components
+import { InputManager } from "../engine/input.js";
+import { Controller, Transform, Viewer } from "../engine/object.js";
+import { Time } from "../engine/time.js";
 
-import { Controller, Viewer, Transform } from "./components.js";
-import { GameObject } from "./game_object.js";
-import { getInput } from "./input.js";
-
-export function createPlayer() {
-    let player = new GameObject();
-    player.addComponent(new PlayerController());
-    player.addComponent(new PlayerViewer());
-    return player;
-}
-
-class PlayerController extends Controller {
+export class PlayerController extends Controller {
     start() {
         this.transform = this.gameObject.getComponent(Transform);
     }
 
     update() {
-        let velocity = createVector(getInput("d") - getInput("a"), getInput("s") - getInput("w"));
-        this.transform.position.add(velocity.setMag(300 * deltaTime));
+        let velocity = createVector(
+            InputManager.getInput("d") - InputManager.getInput("a"),
+            InputManager.getInput("s") - InputManager.getInput("w")
+        );
+        this.transform.position.add(velocity.setMag(300 * Time.deltaTime()));
         this.transform.rotation = atan2(mouseY - height / 2, mouseX - width / 2);
-
-        // gameScene.setCameraPosition(createVector(-this.transform.position.x, -this.transform.position.y));
     }
 }
 
-class PlayerViewer extends Viewer {
+export class PlayerViewer extends Viewer {
     start() {
         this.transform = this.gameObject.getComponent(Transform);
     }
@@ -43,7 +35,7 @@ class PlayerViewer extends Viewer {
         let x3 = pos.x + cos(rot + (TWO_PI / 3) * 2) * size;
         let y3 = pos.y + sin(rot + (TWO_PI / 3) * 2) * size;
 
-        fill(80, 140, 200);
+        fill(200, 140, 80);
         triangle(x1, y1, x2, y2, x3, y3);
     }
 }
