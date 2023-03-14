@@ -1,4 +1,4 @@
-import { GameObject, Transform } from "./object.js";
+import { GameObject, GamePrefab, Transform } from "./object.js";
 import { Time } from "./time.js";
 import { getName, isObjectChildOfClass, isObjectOfClass } from "./type_checker.js";
 
@@ -20,7 +20,17 @@ export class SceneManager {
         if (!isObjectChildOfClass(scene, Scene)) throw `'${getName(scene)}' not of type Scene`;
         if (sceneName in this.scenes) throw `'${sceneName}' is already a registed Scene`;
         this.scenes[sceneName] = scene;
-        scene.start();
+    }
+
+    /**
+     * Sets the entry Scene
+     * @param {String} sceneName The name of the Scene
+     */
+    static setEntryScene(sceneName) {
+        this.setActiveScene(sceneName);
+        for (let key in this.scenes) {
+            this.scenes[key].start();
+        }
     }
 
     /**
@@ -127,6 +137,9 @@ class Camera {
  */
 export class Scene {
     gameObjects = [];
+    gamePrefabs = [];
+    taggedGameObjects = {};
+    taggedGamePrefabs = {};
     camera = null;
 
     constructor() {
@@ -135,18 +148,27 @@ export class Scene {
 
     /**
      * Gets called once when the Scene is registered
+     * @abstract
      */
     start() {}
 
     /**
      * Gets called every time the Scene becomes active
+     * @abstract
      */
     onEnter() {}
+
+    /**
+     * Gets called every frame to display the Scene
+     * @abstract
+     */
+    display() {}
 
     /**
      * Gets called every frame, while the Scene is active
      */
     tick() {
+        // TODO: Stop updating objects further than __distance__
         this.gameObjects.forEach((obj) => obj.update());
 
         push();
@@ -164,17 +186,47 @@ export class Scene {
     }
 
     /**
-     * Gets called every frame to display the Scene
-     */
-    display() {}
-
-    /**
      * Adds a GameObject to the scene
      * @param {GameObject} object GameObject to add
+     * @param {String} objectTag Optional tag/name to search find the GameObject later
      */
-    addGameObject(object) {
+    addGameObject(object, objectTag = "") {
         if (!isObjectOfClass(object, GameObject)) throw `'${getName(object)}' not of type GameObject`;
-        this.gameObjects.push(object);
+        if (objectTag == "") this.gameObjects.push(object);
+        else this.taggedGameObjects[objectTag] = object;
+    }
+
+    /**
+     * Removes a GameObject from the Scene
+     * @param {GameObject} gameObject GameObject to remove
+     */
+    removeGameObject(gameObject) {
+        if (!isObjectOfClass(gameObject, GameObject)) throw `'${getName(gameObject)}' not of type GameObject`;
+        let index = this.gameObjects.findIndex((obj) => obj === gameObject);
+        if (index > -1) this.gameObjects.splice(index, 1);
+    }
+
+    /**
+     * TODO:
+     */
+    getGameObject(tag) {}
+
+    /**
+     * Adds a GamePrefab to the Scene
+     * @param {GamePrefab} prefab GamePrefab to add
+     * @param {String} prefabTag Optional tag/name to search find the GamePrefab later
+     */
+    addGamePrefab(prefab, prefabTag = "") {
+        if (!isObjectOfClass(prefab, GamePrefab)) throw `'${getName(prefab)}' not of type GamePrefab`;
+        if (prefabTag == "") this.gamePrefabs.push(prefab);
+        else this.taggedGamePrefabs[prefabTag] = prefab;
+    }
+
+    /**
+     * TODO:
+     */
+    getGamePrefab(prefabTag) {
+        return this.taggedGamePrefabs[prefabTag];
     }
 }
 
@@ -197,8 +249,23 @@ export class SceneTransition {
 
     /**
      * Gets called when transition is initialized
+     * @abstract
      */
     start() {}
+
+    /**
+     * Gets called every frame while orginal scene is active
+     * @param {Float} p Percentage done
+     * @abstract
+     */
+    displayEntry(p) {}
+
+    /**
+     * Gets called every frame while new scene is active
+     * @param {Float} p Percentage done
+     * @abstract
+     */
+    displayClose(p) {}
 
     /**
      * Updates internal timer and calls display functions
@@ -208,16 +275,4 @@ export class SceneTransition {
         if (this.timer < this.transitionTime) this.displayEntry(this.timer / this.transitionTime);
         else this.displayClose((this.timer - this.transitionTime) / (this.duration - this.transitionTime));
     }
-
-    /**
-     * Gets called every frame while orginal scene is active
-     * @param {Float} p Percentage done
-     */
-    displayEntry(p) {}
-
-    /**
-     * Gets called every frame while new scene is active
-     * @param {Float} p Percentage done
-     */
-    displayClose(p) {}
 }

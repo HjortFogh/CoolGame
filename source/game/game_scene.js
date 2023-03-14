@@ -1,12 +1,18 @@
 import { InputManager } from "../engine/input.js";
-import { GameObject, Transform } from "../engine/object.js";
+import { GameObject, GamePrefab, Transform } from "../engine/object.js";
 import { Scene, SceneManager } from "../engine/scene.js";
 import { EnemyController, EnemyViewer } from "./enemy.js";
-import { PlayerController, PlayerViewer } from "./player.js";
+import { BulletController, BulletViewer, PlayerController, PlayerViewer } from "./player.js";
 import { CoolTransiton } from "./transitions.js";
 
 export class GameScene extends Scene {
     start() {
+        let bullet = new GameObject();
+        bullet.addComponent(new BulletController());
+        bullet.addComponent(new BulletViewer());
+        let bulletPrefab = new GamePrefab(bullet);
+        this.addGamePrefab(bulletPrefab, "BulletPrefab");
+
         let player = new GameObject();
         player.addComponent(new PlayerController());
         player.addComponent(new PlayerViewer());

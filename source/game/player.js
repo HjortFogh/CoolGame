@@ -1,10 +1,52 @@
 import { InputManager } from "../engine/input.js";
 import { Controller, Transform, Viewer } from "../engine/object.js";
+import { SceneManager } from "../engine/scene.js";
 import { Time } from "../engine/time.js";
+
+export class BulletController extends Controller {
+    start() {
+        this.transform = this.gameObject.getComponent(Transform);
+        // print("Bullet:", this.transform);
+        this.velocity = createVector(0, 0);
+        setTimeout(this.gameObject.destroy, 10000);
+    }
+
+    fire(dir) {
+        // this.velocity.x = cos(dir) * 500;
+        // this.velocity.y = sin(dir) * 500;
+        this.velocity.x = cos(dir) * 50;
+        this.velocity.y = sin(dir) * 50;
+    }
+
+    update() {
+        this.transform.position.x += this.velocity.x * Time.deltaTime();
+        this.transform.position.y += this.velocity.y * Time.deltaTime();
+    }
+}
+
+export class BulletViewer extends Viewer {
+    start() {
+        this.transform = this.gameObject.getComponent(Transform);
+    }
+
+    display() {
+        fill(0);
+        circle(this.transform.position.x, this.transform.position.y, 10);
+    }
+}
 
 export class PlayerController extends Controller {
     start() {
         this.transform = this.gameObject.getComponent(Transform);
+        this.bulletPrefab = SceneManager.activeScene.getGamePrefab("BulletPrefab");
+    }
+
+    shoot() {
+        let bulletInstance = this.bulletPrefab.spawn();
+        let transform = bulletInstance.getComponent(Transform);
+        transform.position = this.transform.position.copy();
+        let bullet = bulletInstance.getComponent(BulletController);
+        bullet.fire(this.transform.rotation);
     }
 
     update() {
@@ -14,6 +56,8 @@ export class PlayerController extends Controller {
         );
         this.transform.position.add(velocity.setMag(300 * Time.deltaTime()));
         this.transform.rotation = atan2(mouseY - height / 2, mouseX - width / 2);
+
+        if (InputManager.getInput("e")) this.shoot();
     }
 }
 

@@ -1,6 +1,7 @@
 // TODO: special case for transform
 // TODO: z-sorting for all viewer components
 
+import { Scene } from "./scene.js";
 import { getName, isClassChildOfClass, isObjectChildOfClass, isObjectOfClass } from "./type_checker.js";
 
 /**
@@ -10,6 +11,13 @@ export class GameObject {
     models = [];
     viewers = [];
     controllers = [];
+    destroySelfCallback = null;
+
+    /**
+     * Gets called before GameObject is destroyed
+     * @abstract
+     */
+    onDestroy() {}
 
     /**
      * Constructs a new GameObject
@@ -65,6 +73,57 @@ export class GameObject {
     display() {
         this.viewers.forEach((view) => view.display());
     }
+
+    /**
+     * Copies a GameObject
+     * @returns {GameObject}
+     */
+    copy() {
+        let newObject = Object.create(this.constructor.prototype);
+
+        newObject.models = this.models.map((comp) => comp.copy());
+        newObject.viewers = this.viewers.map((comp) => comp.copy());
+        newObject.controllers = this.controllers.map((comp) => comp.copy());
+
+        newObject.models.forEach((comp) => comp.initialize(newObject));
+        newObject.viewers.forEach((comp) => comp.initialize(newObject));
+        newObject.controllers.forEach((comp) => comp.initialize(newObject));
+
+        return newObject;
+    }
+
+    /**
+     * Sets the callback function used when the GameObject should be destroyed
+     * @param {Function} callback
+     */
+    setDestroyCallback(callback) {
+        if (typeof callback !== "function") throw `'${callback}' was not a function`;
+        this.destroySelfCallback = callback;
+    }
+
+    /**
+     * Destroys the GameObject
+     */
+    destroy() {
+        this.onDestroy();
+        destroySelfCallback();
+    }
+}
+
+export class GamePrefab {
+    gameObject;
+    objectPool = [];
+
+    constructor(object, initialPoolSize = 10) {
+        this.gameObject = object;
+        // for (let i = 0; i < max(initialPoolSize, 0); i++) this.objectPool.push(this.gameObject.copy());
+    }
+
+    spawn() {
+        // TODO: check if existing in pool
+        let spawnedObject = this.gameObject.copy();
+        return spawnedObject;
+    }
 }
 
 /**
@@ -74,7 +133,7 @@ export class Component {
     gameObject = null;
 
     /**
-     * Initializes a Component
+     * Initializes the Component
      * @param {GameObject} object The GameObject which the Component has been attached to
      */
     initialize(object) {
@@ -83,7 +142,21 @@ export class Component {
     }
 
     /**
+     * Copies a Component
+     * @param {GameObject} newObject The new GameObject parent
+     * @returns {Component}
+     */
+    copy() {
+        let newComponent = Object.create(this.constructor.prototype);
+        // print(newComponent.constructor.name, newComponent);
+        // print("Copy of component:", this.constructor.name);
+        return newComponent;
+        // return new
+    }
+
+    /**
      * Gets called after Component has been initialized
+     * @abstract
      */
     start() {}
 }
@@ -99,6 +172,7 @@ export class Model extends Component {}
 export class Viewer extends Component {
     /**
      * Gets called once every frame
+     * @abstract
      */
     display() {}
 }
@@ -109,18 +183,18 @@ export class Viewer extends Component {
 export class Controller extends Component {
     /**
      * Gets called once every frame
+     * @abstract
      */
     update() {}
 }
 
 /**
- * Represents an objects position, rotation and scale
+ * Represents a GameObject(s) position, rotation and scale
  */
 export class Transform extends Model {
-    constructor(pos = createVector(0, 0), rot = 0, scale = createVector(1, 1)) {
-        super();
-        this.position = pos;
-        this.rotation = rot;
-        this.scale = scale;
+    start() {
+        this.position = createVector(0, 0);
+        this.rotation = 0;
+        this.scale = createVector(1, 1);
     }
 }

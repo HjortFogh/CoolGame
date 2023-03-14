@@ -7,7 +7,7 @@ import { MainMenuScene } from "./main_menu_scene.js";
 function entry() {
     SceneManager.registerScene(new GameScene(), "GameScene");
     SceneManager.registerScene(new MainMenuScene(), "MainMenuScene");
-    SceneManager.setActiveScene("GameScene");
+    SceneManager.setEntryScene("GameScene");
 }
 
 initialize(entry);
