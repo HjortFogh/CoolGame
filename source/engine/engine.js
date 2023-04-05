@@ -1,28 +1,25 @@
-import { SceneManager } from "../engine/scene.js";
-import { InputManager } from "../engine/input.js";
-import { PerformanceManager } from "../engine/performance.js";
-
-let debugMode = true;
+import { SceneManager, Scene, SceneTransition } from "./canvas/scene.js";
+import { Input } from "./input.js";
+import { AssetManager } from "./assets.js";
+import { Model, Viewer, Controller } from "./components/component.js";
+import { Time } from "./time.js";
 
 export function initialize(onInit) {
     window.setup = () => {
         createCanvas(windowWidth, windowHeight);
-        if (debugMode) PerformanceManager.initialize();
         onInit();
     };
 
     window.draw = () => {
+        Time.tick();
         SceneManager.tick();
-        InputManager.tick();
-
-        if (debugMode) {
-            push();
-            PerformanceManager.tick();
-            PerformanceManager.displayFPS();
-            pop();
-        }
+        Input.tick();
     };
 
-    window.keyPressed = () => InputManager.keyPressed(key);
-    window.keyReleased = () => InputManager.keyReleased(key);
+    window.keyPressed = () => Input.keyPressed(key);
+    window.keyReleased = () => Input.keyReleased(key);
+    window.mousePressed = () => Input.keyPressed(mouseButton);
+    window.mouseReleased = () => Input.keyReleased(mouseButton);
 }
+
+export { SceneManager, Scene, SceneTransition, Input, Model, Viewer, Controller, Time, AssetManager };

@@ -3,15 +3,17 @@
 /**
  * Handles keyboard and mouse input
  */
-export class InputManager {
-    static previousUserInput = {};
+export class Input {
     static userInput = {};
+    static userInputPressed = {};
+    static userInputReleased = {};
 
     /**
      * Stores the previous user input
      */
     static tick() {
-        this.previousUserInput = structuredClone(this.userInput);
+        this.userInputPressed = {};
+        this.userInputReleased = {};
     }
 
     /**
@@ -19,7 +21,8 @@ export class InputManager {
      * @param {String} key Key which has been pressed
      */
     static keyPressed(key) {
-        this.userInput[key] = true;
+        this.userInputPressed[key.toLowerCase()] = true;
+        this.userInput[key.toLowerCase()] = true;
     }
 
     /**
@@ -27,7 +30,12 @@ export class InputManager {
      * @param {String} key Key which has been released
      */
     static keyReleased(key) {
-        this.userInput[key] = false;
+        try {
+            this.userInputReleased[key.toLowerCase()] = true;
+            this.userInput[key.toLowerCase()] = false;
+        } catch {
+            console.log(key);
+        }
     }
 
     /**
@@ -36,16 +44,8 @@ export class InputManager {
      * @returns {Boolean}
      */
     static getInput(key) {
+        key = key.toLowerCase();
         return this.userInput[key] !== undefined ? this.userInput[key] : false;
-    }
-
-    /**
-     * Returns whether key was pressed last frame
-     * @param {String} key Key to check
-     * @returns {Boolean}
-     */
-    static getPreviousInput(key) {
-        return this.previousUserInput[key] !== undefined ? this.previousUserInput[key] : false;
     }
 
     /**
@@ -54,7 +54,7 @@ export class InputManager {
      * @returns {Boolean}
      */
     static getPressed(key) {
-        return this.getInput(key) && !this.getPreviousInput(key);
+        return this.userInputPressed[key] !== undefined ? this.userInputPressed[key] : false;
     }
 
     /**
@@ -63,6 +63,6 @@ export class InputManager {
      * @returns {Boolean}
      */
     static getReleased(key) {
-        return !this.getInput(key) && this.getPreviousInput(key);
+        return this.userInputReleased[key] !== undefined ? this.userInputReleased[key] : false;
     }
 }
