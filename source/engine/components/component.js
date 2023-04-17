@@ -23,7 +23,7 @@ export class Component {
     }
 
     copy() {
-        return new this.constructor(this.args);
+        return new this.constructor(...this.args);
     }
 }
 

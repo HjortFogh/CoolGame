@@ -1,6 +1,7 @@
 import { Time } from "../time.js";
-import { createPoint } from "../point.js";
+import { createPoint, createRect } from "../point.js";
 import { Transform } from "../components/transform.js";
+import { SpatialManager } from "../spatial_partitioning.js";
 
 // TODO: Type checking
 
@@ -55,6 +56,7 @@ export class SceneManager {
 
     static transition(newTransition, sceneName) {
         if (!(sceneName in this.scenes)) throw `No scene with name: '${sceneName}'`;
+        if (sceneName == this.activeSceneName) return;
 
         if (this.isTransitioning) return;
         this.isTransitioning = true;
@@ -65,31 +67,35 @@ export class SceneManager {
     }
 }
 
-class Camera {
-    position = createPoint(0, 0);
-    target = null;
+export class Camera {
+    static position = createPoint(0, 0);
+    static target = null;
 
-    getPosition() {
-        return createPoint(0, 0);
-        // if (this.target === null) return createPoint(this.position.x - width / 2, this.position.x - height / 2);
-        // throw "Um hello?";
-        // return createPoint(this.target.getComponent(Transform));
+    static getPosition() {
+        if (this.target !== null) return createPoint(-this.target.position.x, -this.target.position.y);
+        return this.position;
     }
 
-    isVisible(transform) {
+    static isVisible(transform) {
         let cameraPos = this.getPosition();
 
-        let xDist = width / 2 - cameraPos.x - transform.position.x;
-        let yDist = height / 2 - cameraPos.y - transform.position.y;
+        let xDist = -cameraPos.x - transform.position.x;
+        let yDist = -cameraPos.y - transform.position.y;
 
         return !(abs(xDist) > width / 2 || abs(yDist) > height / 2);
+    }
+
+    static setTarget(newTarget) {
+        this.target = newTarget;
+    }
+
+    static setPosition(newPos) {
+        this.position = newPos;
     }
 }
 
 export class Scene {
     isInitialized = false;
-
-    camera = new Camera();
 
     gameObjects = [];
     gamePrefabs = [];
@@ -107,19 +113,20 @@ export class Scene {
     }
 
     tick() {
+        SpatialManager.generate(this.gameObjects);
+
         this.updateGameObjects();
 
         this.background();
 
-        // Generate R-Tree
-        // Collision detection
-
         push();
 
-        let cameraPos = this.camera.getPosition();
-        translate(cameraPos.x, cameraPos.y);
+        let cameraPos = Camera.getPosition();
+        translate(cameraPos.x + width / 2, cameraPos.y + height / 2);
 
         this.displayGameObjects();
+
+        // SpatialManager.display();
 
         pop();
 
@@ -137,7 +144,7 @@ export class Scene {
     }
 
     displayGameObjects() {
-        let visibleObjects = this.gameObjects.filter((gameObject) => this.camera.isVisible(gameObject.getComponent(Transform)));
+        let visibleObjects = this.gameObjects.filter((gameObject) => Camera.isVisible(gameObject.getComponent(Transform)));
 
         for (let i = 0; i < 100; i++) {
             let completed = true;

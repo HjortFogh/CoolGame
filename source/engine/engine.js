@@ -1,10 +1,14 @@
 import { SceneManager, Scene, SceneTransition } from "./canvas/scene.js";
 import { Input } from "./input.js";
-import { AssetManager } from "./assets.js";
+import { AssetManager } from "./assets/assets.js";
 import { Model, Viewer, Controller } from "./components/component.js";
 import { Time } from "./time.js";
 
-export function initialize(onInit) {
+export function initialize(onPreload, onInit) {
+    window.preload = () => {
+        onPreload();
+    };
+
     window.setup = () => {
         createCanvas(windowWidth, windowHeight);
         onInit();
