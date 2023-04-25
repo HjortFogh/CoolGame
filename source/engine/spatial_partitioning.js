@@ -73,7 +73,7 @@ export class SpatialManager {
     static generate(gameObjects) {
         this.rTree.reset();
         for (let gameObject of gameObjects) {
-            let transform = gameObject.getComponent(Transform);
+            let transform = gameObject.getComponent("Transform");
             this.rTree.addPoint(transform.position, gameObject);
         }
     }

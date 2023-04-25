@@ -1,10 +1,7 @@
-import * as Engine from "../engine/engine.js";
+import * as Engine from "../../engine/engine.js";
 
 export class MainMenuScene extends Engine.Scene {
-    start() {
-        //
-        console.log("MainMenuScene");
-    }
+    start() {}
 
     background() {
         background(100, 150, 200);

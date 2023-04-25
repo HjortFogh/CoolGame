@@ -1,4 +1,4 @@
-import { createPoint } from "../point.js";
+import { createVector } from "../vector.js";
 import { Model } from "./component.js";
 
 export class Transform extends Model {
@@ -6,7 +6,7 @@ export class Transform extends Model {
     scale;
     rotation;
 
-    start(pos = createPoint(0, 0), scale = createPoint(50, 50), rot = 0) {
+    start(pos = createVector(0, 0), scale = createVector(50, 50), rot = 0) {
         this.position = pos;
         this.scale = scale;
         this.rotation = rot;

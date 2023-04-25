@@ -1,7 +1,6 @@
 import { createPoint, createRect, lerpPoint, pointWithinRect } from "../point.js";
 import { SpatialManager } from "../spatial_partitioning.js";
 import { Controller } from "./component.js";
-import { Transform } from "./transform.js";
 
 export const CollisionEvent = {
     onEnter: 0,
@@ -42,7 +41,7 @@ class Collider extends Controller {
         let gameObjects = SpatialManager.get(aabbDoubleGlobal);
 
         for (let gameObject of gameObjects) {
-            let colliders = gameObject.getComponentsRecursive(Collider);
+            let colliders = gameObject.getComponentsRecursive("Collider");
             for (let collider of colliders) {
                 if (collider === this) continue;
 
@@ -96,8 +95,8 @@ class Collider extends Controller {
 }
 
 export class RectCollider extends Collider {
-    start(scale = createPoint(50, 50), offset = createPoint(0, 0)) {
-        this.transform = this.gameObject.getComponent(Transform);
+    start(scale = createPoint(50, 50)) {
+        this.transform = this.gameObject.getComponent("Transform");
         this.aabb = createRect(-scale.x / 2, -scale.y / 2, scale.x, scale.y);
 
         // TODO: redo vert calculation based on scale
@@ -130,8 +129,8 @@ export class RectCollider extends Collider {
 export class CircleCollider extends Collider {
     radius;
 
-    start(radius = 50, offset = createPoint(0, 0)) {
-        this.transform = this.gameObject.getComponent(Transform);
+    start(radius = 50) {
+        this.transform = this.gameObject.getComponent("Transform");
         this.radius = radius;
         this.aabb = createRect(-radius, -radius, radius * 2, radius * 2);
 

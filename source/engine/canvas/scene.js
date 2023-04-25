@@ -82,7 +82,7 @@ export class Camera {
         let xDist = -cameraPos.x - transform.position.x;
         let yDist = -cameraPos.y - transform.position.y;
 
-        return !(abs(xDist) > width / 2 || abs(yDist) > height / 2);
+        return !(abs(xDist) > width / 2 + transform.scale.x || abs(yDist) > height / 2 + transform.scale.y);
     }
 
     static setTarget(newTarget) {
@@ -96,9 +96,13 @@ export class Camera {
 
 export class Scene {
     isInitialized = false;
+    isPaused = false;
 
     gameObjects = [];
     gamePrefabs = [];
+    scripts = [];
+
+    uiElements = [];
 
     start() {}
     onEnter() {}
@@ -109,13 +113,18 @@ export class Scene {
     initialize() {
         this.start();
         for (let gameObject of this.gameObjects) gameObject.initialize();
+        for (let uiElement of this.uiElements) uiElement.initialize();
         this.isInitialized = true;
+        for (let script of this.scripts) script.initialize();
     }
 
     tick() {
         SpatialManager.generate(this.gameObjects);
 
-        this.updateGameObjects();
+        for (let script of this.scripts) script.update();
+        if (!this.isPaused) this.updateGameObjects();
+        for (let script of this.scripts) script.lateUpdate();
+        for (let uiSurface of this.uiElements) uiSurface.update();
 
         this.background();
 
@@ -126,12 +135,25 @@ export class Scene {
 
         this.displayGameObjects();
 
-        // SpatialManager.display();
+        SpatialManager.display();
 
         pop();
 
+        for (let uiSurface of this.uiElements) uiSurface.display();
         this.overlay();
     }
+
+    //#region Pausing
+
+    pause() {
+        this.isPaused = true;
+    }
+
+    unpause() {
+        this.isPaused = false;
+    }
+
+    //#endregion
 
     //#region GameObjects
 
@@ -144,7 +166,7 @@ export class Scene {
     }
 
     displayGameObjects() {
-        let visibleObjects = this.gameObjects.filter((gameObject) => Camera.isVisible(gameObject.getComponent(Transform)));
+        let visibleObjects = this.gameObjects.filter((gameObject) => Camera.isVisible(gameObject.getComponent("Transform")));
 
         for (let i = 0; i < 100; i++) {
             let completed = true;
@@ -169,6 +191,24 @@ export class Scene {
         newGamePrefab.setScene(this);
         this.gamePrefabs.push(newGamePrefab);
         if (gamePrefabName != "") this.gamePrefabRegister.set(gamePrefabName, newGamePrefab);
+    }
+
+    //#endregion
+
+    //#region Script
+
+    bindScript(newScript) {
+        newScript.setScene(this);
+        this.scripts.push(newScript);
+    }
+
+    //#endregion
+
+    //#region UI
+
+    addUIElement(uiElement) {
+        this.uiElements.push(uiElement);
+        if (this.isInitialized) uiElement.initialize();
     }
 
     //#endregion
@@ -197,5 +237,22 @@ export class SceneTransition {
         this.timer += Time.deltaTime();
         if (this.timer >= this.oldSceneDuration) SceneManager.changeScene(this.sceneName);
         this.display(this.timer / this.duration);
+    }
+}
+
+export class Script {
+    scene;
+
+    start() {}
+    update() {}
+    lateUpdate() {}
+
+    initialize() {
+        if (this.scene === undefined) throw `Change this error message to something helpful`;
+        this.start();
+    }
+
+    setScene(newScene) {
+        this.scene = newScene;
     }
 }

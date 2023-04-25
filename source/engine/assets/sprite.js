@@ -9,6 +9,8 @@ export class Sprite {
 
     display(x, y, w, h) {
         if (this.image === undefined) return;
+        imageMode(CENTER);
+        noSmooth();
         image(this.image, x, y, w, h);
     }
 
@@ -16,10 +18,19 @@ export class Sprite {
 }
 
 export class SpriteAtlas {
-    constructor(imagePath, spriteScale) {
+    constructor(image, spriteScale) {
         this.sprites = [];
-        loadImage(imagePath, (atlas) => this.split(atlas, spriteScale));
+        // image;
+        // loadImage(imagePath, (atlas) => this.split(atlas, spriteScale));
         // ...
+    }
+
+    static load(imagePath, spriteScale) {
+        let spriteAtlas = new SpriteAtlas(
+            loadImage(imagePath, (atlas) => spriteAtlas.split(atlas, spriteScale)),
+            spriteScale
+        );
+        return spriteAtlas;
     }
 
     split(atlas, spriteScale) {

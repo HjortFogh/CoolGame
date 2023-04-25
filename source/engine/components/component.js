@@ -1,8 +1,9 @@
 export class Component {
     gameObject;
     args = [];
+    onInitCallbacks = [];
 
-    isInitialized = false;
+    isComponentInitialized = false;
 
     start() {}
 
@@ -11,14 +12,23 @@ export class Component {
     }
 
     initialize(parentGameObject) {
-        if (this.isInitialized) throw `Component: '${this.constructor.name}' already initialized`;
+        if (this.isComponentInitialized) return;
         this.gameObject = parentGameObject;
         this.start(...this.args);
-        this.isInitialized = true;
+        this.isComponentInitialized = true;
+        for (let callback of this.onInitCallbacks) callback();
+    }
+
+    isInitialized() {
+        return this.isComponentInitialized;
+    }
+
+    onInitialize(callback) {
+        this.onInitCallbacks.push(callback);
     }
 
     restart() {
-        if (!this.isInitialized) throw `Cannot reset Component: '${this.constructor.name}' before it is initialized`;
+        if (!this.isComponentInitialized) throw `Cannot reset Component: '${this.constructor.name}' before it is initialized`;
         this.start(...this.args);
     }
 

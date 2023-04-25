@@ -2,8 +2,8 @@ import { Transform } from "../components/transform.js";
 import { Controller, Viewer } from "../engine.js";
 
 export class GameObject {
-    startedFlag = false;
-    destroyedFlag = false;
+    isObjectInitialized = false;
+    isObjectDestroyed = false;
 
     static componentsTree = new Map();
     components = new Map();
@@ -13,8 +13,12 @@ export class GameObject {
     layers = [];
 
     initialize() {
+        this.isObjectInitialized = true;
         for (let [, comps] of this.components) comps.forEach((comp) => comp.initialize(this));
-        this.startedFlag = true;
+    }
+
+    isInitialized() {
+        return this.isObjectInitialized;
     }
 
     update() {
@@ -40,8 +44,12 @@ export class GameObject {
 
     //#region Destroy
 
-    destroy = () => (this.destroyedFlag = true);
-    isDestroyed = () => this.destroyedFlag;
+    destroy() {
+        this.isObjectDestroyed = true;
+    }
+    isDestroyed() {
+        return this.isObjectDestroyed;
+    }
 
     //#endregion
 
@@ -81,20 +89,22 @@ export class GameObject {
         if (component instanceof Viewer) this.viewers.push(component);
         else if (component instanceof Controller) this.controllers.push(component);
 
-        if (this.startedFlag) component.initialize(this);
+        if (this.isObjectInitialized) component.initialize(this);
     }
 
-    getComponents(componentConstructor) {
-        if (!this.components.has(componentConstructor.name)) throw `'${componentConstructor.name}' not a registered Component`;
-        return this.components.get(componentConstructor.name);
+    getComponents(componentConstructorName) {
+        if (!this.components.has(componentConstructorName)) return undefined;
+        return this.components.get(componentConstructorName);
     }
 
-    getComponent(componentConstructor, index = 0) {
-        return this.getComponents(componentConstructor)[index];
+    getComponent(componentConstructorName, index = 0) {
+        let components = this.getComponents(componentConstructorName);
+        if (components === undefined) return undefined;
+        return components[index];
     }
 
-    getComponentsRecursive(componentConstructor) {
-        let keys = [componentConstructor.name].concat(GameObject.getBranch(componentConstructor.name));
+    getComponentsRecursive(componentConstructorName) {
+        let keys = [componentConstructorName].concat(GameObject.getBranch(componentConstructorName));
         let components = [];
         for (let key of keys) {
             let comps = this.components.get(key);
@@ -117,8 +127,8 @@ export class GameObject {
     }
 
     restart() {
-        if (!this.startedFlag) throw `Cannot reset GameObject before initialization`;
-        this.destroyedFlag = false;
+        if (!this.isObjectInitialized) throw `Cannot reset GameObject before initialization`;
+        this.isDestroyed = false;
         for (let [, comps] of this.components) comps.forEach((comp) => comp.restart());
     }
 }
@@ -136,7 +146,7 @@ export class GamePrefab {
     scene;
 
     constructor(prefabGameObject) {
-        if (prefabGameObject.startedFlag) throw `GamePrefab must be provided with an uninstantiated GameObject`;
+        if (prefabGameObject.isInitialized()) throw `GamePrefab must be provided with an uninstantiated GameObject`;
         this.prefabGameObject = prefabGameObject;
     }
 
