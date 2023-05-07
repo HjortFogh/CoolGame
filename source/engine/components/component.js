@@ -13,9 +13,11 @@ export class Component {
 
     initialize(parentGameObject) {
         if (this.isComponentInitialized) return;
+        this.isComponentInitialized = true;
+
         this.gameObject = parentGameObject;
         this.start(...this.args);
-        this.isComponentInitialized = true;
+
         for (let callback of this.onInitCallbacks) callback();
     }
 
@@ -42,7 +44,11 @@ export class Viewer extends Component {
     viewLayer = 0;
 
     setViewLayer(newLayer) {
-        this.viewLayer = Math.max(newLayer, 0);
+        this.viewLayer = Math.min(Math.max(newLayer, 0), 50);
+    }
+
+    getViewLayer() {
+        return this.viewLayer;
     }
 
     display() {}

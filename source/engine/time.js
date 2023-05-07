@@ -5,7 +5,7 @@ export class Time {
 
     static tick() {
         for (let i = this.timers.length - 1; i >= 0; i--) {
-            if (SceneManager.activeScene !== this.timers[i].scene || this.timers[i].scene.isPaused) continue;
+            if (SceneManager.getActiveScene() !== this.timers[i].scene || this.timers[i].scene.isPaused) continue;
             this.timers[i].counter += this.deltaTime();
             if (this.timers[i].counter >= this.timers[i].time) {
                 this.timers[i].callback();
@@ -26,6 +26,6 @@ export class Time {
     }
 
     static createTimer(callback, timeInSeconds) {
-        this.timers.push({ callback: callback, time: timeInSeconds, counter: 0, scene: SceneManager.activeScene });
+        this.timers.push({ callback: callback, time: timeInSeconds, counter: 0, scene: SceneManager.getActiveScene() });
     }
 }

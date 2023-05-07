@@ -108,7 +108,10 @@ export class AnimationTree extends Viewer {
 
     addAnimationSelector(animationSelector, animationSelectorName) {
         if (animationSelectorName in this.animationSelectors) return;
-        if (this.currentAnimationSelector == "") this.currentAnimationSelector = animationSelectorName;
+        if (this.currentAnimationSelector == "") {
+            this.currentAnimationSelector = animationSelectorName;
+            // this.pacemaker.setAnimation(animationSelector.getAnimation());
+        }
         this.animationSelectors[animationSelectorName] = animationSelector;
         this.transitions[animationSelectorName] = [];
         animationSelector.setupPropertyCallbacks(this);
@@ -122,7 +125,7 @@ export class AnimationTree extends Viewer {
     transition(event) {
         for (let transition of this.transitions[this.currentAnimationSelector]) {
             if (transition.event == event) {
-                this.pacemaker.setAnimation(this.animationSelectors[this.currentAnimationSelector].getAnimation());
+                // this.pacemaker.setAnimation(this.animationSelectors[this.currentAnimationSelector].getAnimation());
                 this.currentAnimationSelector = transition.target;
             }
         }
@@ -131,6 +134,7 @@ export class AnimationTree extends Viewer {
     display() {
         let animation = this.animationSelectors[this.currentAnimationSelector].getAnimation();
         if (animation === undefined) return;
+        this.pacemaker.setAnimation(animation);
         animation.display(this.transform.position.x, this.transform.position.y, this.transform.scale.x, this.transform.scale.y);
     }
 
