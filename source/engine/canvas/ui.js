@@ -1,36 +1,98 @@
 import { Input } from "../input.js";
+// import { pointWithinRect } from "../point.js";
+import { Vector, createVector } from "../vector.js";
 
 const DEFAULT_STYLE = {
     fillColor: [0, 0, 0, 255],
     borderColor: [0, 0, 0, 255],
+    visible: true,
 };
 
 class UIElement {
-    isVisible = true;
-
-    style = {};
-    eventListeners = {};
-
     args = [];
 
-    constructor(style, ...args) {
+    isInitialized = false;
+    shouldDisplay = true;
+
+    style = {};
+    children = [];
+
+    offset = createVector(0);
+    size = createVector(50);
+
+    eventListeners = {};
+
+    isMouseHovering = false;
+
+    start() {}
+    updateElement(position) {}
+    displayElement(position) {}
+
+    constructor(...args) {
+        this.args = args;
+    }
+
+    initialize() {
+        if (this.isInitialized) return;
+        for (let uiElement of this.children) uiElement.initialize();
+        this.setStyle(DEFAULT_STYLE);
+        this.start(...this.args);
+        this.isInitialized = true;
+    }
+
+    setStyle(style) {
         this.style = style;
         for (let key of Object.keys(DEFAULT_STYLE)) {
             if (!(key in style)) {
                 this.style[key] = DEFAULT_STYLE[key];
             }
         }
-
-        this.args = args;
     }
 
-    initialize() {
-        this.start(...this.args);
+    enabled(mode) {
+        this.shouldDisplay = mode;
     }
-    start() {}
 
-    update() {}
-    display(x = 0, y = 0) {}
+    isHovering(position) {
+        return mouseX > position.x && mouseX < position.x + this.size.x && mouseY > position.y && mouseY < position.y + this.size.y;
+    }
+
+    handleHoverEvents(position) {
+        if (this.isHovering(position)) {
+            if (!this.isMouseHovering) {
+                this.isMouseHovering = true;
+                this.triggerEvent("HoverEnter");
+            }
+        } else {
+            if (this.isMouseHovering) {
+                this.isMouseHovering = false;
+                this.triggerEvent("HoverExit");
+            }
+        }
+    }
+
+    update(position = createVector(0)) {
+        let nextPosition = Vector.add(position, this.offset);
+
+        this.handleHoverEvents(nextPosition);
+
+        this.updateElement(nextPosition);
+        for (let uiElement of this.children) uiElement.update(nextPosition);
+    }
+
+    display(position = createVector(0)) {
+        if (!this.shouldDisplay) return;
+
+        let nextPosition = Vector.add(position, this.offset);
+
+        if (this.style.visible) this.displayElement(nextPosition);
+        for (let uiElement of this.children) uiElement.display(nextPosition);
+    }
+
+    addElement(uiElement) {
+        this.children.push(uiElement);
+        if (this.isInitialized) uiElement.initialize();
+    }
 
     addEventListener(event, callback) {
         if (this.eventListeners[event] === undefined) this.eventListeners[event] = [];
@@ -44,87 +106,61 @@ class UIElement {
 }
 
 class UISurface extends UIElement {
-    uiElements = [];
-    xOffset;
-    yOffset;
-    width;
-    height;
-
-    start(xOffset = 0, yOffset = 0, width = 50, height = 50) {
-        this.xOffset = xOffset;
-        this.yOffset = yOffset;
-        this.width = width;
-        this.height = height;
-
-        for (let uiElement of this.uiElements) {
-            uiElement.initialize();
-        }
+    start(offset, size) {
+        this.offset = offset;
+        this.size = size;
     }
 
-    update(x = 0, y = 0) {
-        for (let uiElement of this.uiElements) {
-            uiElement.update(this.xOffset + x, this.yOffset + y);
-        }
-    }
-
-    display(x = 0, y = 0) {
-        if (!this.isVisible) return;
-        stroke(this.style.borderColor);
-        fill(this.style.fillColor);
-        rect(this.xOffset + x, this.yOffset + y, this.width, this.height);
-        for (let uiElement of this.uiElements) {
-            uiElement.display(this.xOffset + x, this.yOffset + y);
-        }
-    }
-
-    addUIElement(uiElement) {
-        this.uiElements.push(uiElement);
+    displayElement(position) {
+        // stroke(this.style.borderColor);
+        // fill(this.style.fillColor);
+        fill(0);
+        rect(position.x, position.y, this.size.x, this.size.y);
     }
 }
 
 class UIButton extends UIElement {
-    start(xOffset = 0, yOffset = 0, width = 50, height = 50) {
-        this.xOffset = xOffset;
-        this.yOffset = yOffset;
-        this.width = width;
-        this.height = height;
+    start(offset, size) {
+        this.offset = offset;
+        this.size = size;
     }
 
-    update(x = 0, y = 0) {
-        if (mouseX < x + this.xOffset + this.width && mouseX > x + this.xOffset && mouseY < x + this.yOffset + this.height && mouseY > y + this.yOffset) {
+    updateElement(position) {
+        if (this.isHovering(position)) {
             if (Input.getPressed("left")) this.triggerEvent("LeftMousePressed");
             if (Input.getReleased("left")) this.triggerEvent("LeftMouseReleased");
+            if (Input.getPressed("right")) this.triggerEvent("RightMousePressed");
+            if (Input.getReleased("right")) this.triggerEvent("RightMouseReleased");
         }
     }
 
-    display(x = 0, y = 0) {
-        if (!this.isVisible) return;
-        stroke(this.style.borderColor);
-        fill(this.style.fillColor);
-        rect(this.xOffset + x, this.yOffset + y, this.width, this.height);
+    displayElement(position) {
+        // stroke(this.style.borderColor);
+        // fill(this.style.fillColor);
+        fill(255);
+        rect(position.x, position.y, this.size.x, this.size.y);
     }
 }
 
 class UIText extends UIElement {
-    text = "";
-    xOffset = 0;
-    yOffset = 0;
-
-    start(text, xOffset, yOffset) {
-        this.text = text;
-        this.xOffset = xOffset;
-        this.yOffset = yOffset;
-    }
-
-    display(x, y) {
-        if (!this.isVisible) return;
-        stroke(this.style.borderColor);
-        fill(this.style.fillColor);
-        text(this.text, x + this.xOffset, y + this.yOffset);
-    }
+    // text = "";
+    // xOffset = 0;
+    // yOffset = 0;
+    // start(text, xOffset, yOffset) {
+    //     this.text = text;
+    //     this.xOffset = xOffset;
+    //     this.yOffset = yOffset;
+    // }
+    // display(x, y) {
+    //     if (!this.isVisible) return;
+    //     stroke(this.style.borderColor);
+    //     fill(this.style.fillColor);
+    //     text(this.text, x + this.xOffset, y + this.yOffset);
+    // }
 }
 
 let UI = {
+    Element: UIElement,
     Surface: UISurface,
     Button: UIButton,
     Text: UIText,

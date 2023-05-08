@@ -71,14 +71,14 @@ export function createPlayer() {
     viewer.onInitialize(() => {
         let moveSelector = new Engine.DirectionalAnimation();
 
-        moveSelector.addAnimation(new Engine.Animation([sprites[0]], 100), "moveDown", Engine.createVector(0, 1));
-        moveSelector.addAnimation(new Engine.Animation([sprites[1]], 100), "moveDownRight", Engine.createVector(1, 1).normalize());
-        moveSelector.addAnimation(new Engine.Animation([sprites[2]], 100), "moveRight", Engine.createVector(1, 0));
-        moveSelector.addAnimation(new Engine.Animation([sprites[3]], 100), "moveUpRight", Engine.createVector(1, -1).normalize());
-        moveSelector.addAnimation(new Engine.Animation([sprites[4]], 100), "moveUp", Engine.createVector(0, -1));
-        moveSelector.addAnimation(new Engine.Animation([sprites[5]], 100), "moveUpLeft", Engine.createVector(-1, -1).normalize());
-        moveSelector.addAnimation(new Engine.Animation([sprites[6]], 100), "moveLeft", Engine.createVector(-1, 0));
-        moveSelector.addAnimation(new Engine.Animation([sprites[7]], 100), "moveDownLeft", Engine.createVector(-1, 1).normalize());
+        moveSelector.addAnimation(new Engine.Animation(sprites.down, 1.4), "moveDown", Engine.createVector(0, 1));
+        moveSelector.addAnimation(new Engine.Animation(sprites.downRight, 1.4), "moveDownRight", Engine.createVector(1, 1).normalize());
+        moveSelector.addAnimation(new Engine.Animation(sprites.right, 1.4), "moveRight", Engine.createVector(1, 0));
+        moveSelector.addAnimation(new Engine.Animation(sprites.upRight, 1.4), "moveUpRight", Engine.createVector(1, -1).normalize());
+        moveSelector.addAnimation(new Engine.Animation(sprites.up, 1.4), "moveUp", Engine.createVector(0, -1));
+        moveSelector.addAnimation(new Engine.Animation(sprites.upLeft, 1.4), "moveUpLeft", Engine.createVector(-1, -1).normalize());
+        moveSelector.addAnimation(new Engine.Animation(sprites.left, 1.4), "moveLeft", Engine.createVector(-1, 0));
+        moveSelector.addAnimation(new Engine.Animation(sprites.downLeft, 1.4), "moveDownLeft", Engine.createVector(-1, 1).normalize());
 
         let deathSelector = new Engine.AnimationSelector();
 

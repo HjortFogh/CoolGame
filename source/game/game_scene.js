@@ -6,7 +6,6 @@ import { createBasicBullet, createHomingBullet } from "./game/bullet.js";
 import { GameManager } from "./game/game_manager.js";
 import { EnemySpawnerScript } from "./game/enemy_spawner.js";
 import { createArena } from "./game/arena.js";
-import { SliderTransition } from "./scene_transitions.js";
 
 export class GameScene extends Engine.Scene {
     start() {
@@ -32,20 +31,20 @@ export class GameScene extends Engine.Scene {
         this.bindGamePrefab(enemyPrefab);
         Engine.AssetManager.addAsset(enemyPrefab, "EnemyPrefab");
 
-        this.bindScript(new GameManager());
-        this.bindScript(new EnemySpawnerScript());
+        this.addScript(new GameManager());
+        this.addScript(new EnemySpawnerScript());
 
-        let surface = new Engine.UI.Surface({ fillColor: [70], borderColor: [0, 0] }, 0, 0, 300, height);
-        surface.isVisible = false;
-        this.addUIElement(surface);
-        Engine.Events.addEventListener("ScenePaused", () => (surface.isVisible = true));
-        Engine.Events.addEventListener("SceneUnpaused", () => (surface.isVisible = false));
+        // let surface = new Engine.UI.Surface({ fillColor: [70], borderColor: [0, 0] }, 0, 0, 300, height);
+        // surface.isVisible = false;
+        // this.addUIElement(surface);
+        // Engine.Events.addEventListener("ScenePaused", () => (surface.isVisible = true));
+        // Engine.Events.addEventListener("SceneUnpaused", () => (surface.isVisible = false));
 
-        let coolStyle = { borderColor: [255, 255, 255, 255], fillColor: [255] };
-        surface.addUIElement(new Engine.UI.Text(coolStyle, "Move with WASD", 50, 50));
-        let mainMenuBtn = new Engine.UI.Button(coolStyle, 50, 100, 120, 40);
-        surface.addUIElement(mainMenuBtn);
-        mainMenuBtn.addEventListener("LeftMouseReleased", () => Engine.SceneManager.transition(new SliderTransition(2), "MainMenuScene"));
+        // let coolStyle = { borderColor: [255, 255, 255, 255], fillColor: [255] };
+        // surface.addUIElement(new Engine.UI.Text(coolStyle, "Move with WASD", 50, 50));
+        // let mainMenuBtn = new Engine.UI.Button(coolStyle, 50, 100, 120, 40);
+        // surface.addUIElement(mainMenuBtn);
+        // mainMenuBtn.addEventListener("LeftMouseReleased", () => Engine.SceneManager.changeScene("MainMenuScene"));
     }
 
     onEnter() {
