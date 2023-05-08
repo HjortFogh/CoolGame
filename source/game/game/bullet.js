@@ -34,7 +34,7 @@ class BasicBulletController extends Engine.Controller {
         this.transform = this.gameObject.getComponent("Transform");
 
         let collider = this.gameObject.getComponent("RectCollider");
-        if (collider !== undefined) collider.addListener(Engine.CollisionEvent.onEnter, (collider) => this.onCollision(collider));
+        if (collider !== undefined) collider.addListener("onEnter", (collider) => this.onCollision(collider));
 
         Engine.Time.createTimer(() => this.gameObject.destroy(), 5);
     }

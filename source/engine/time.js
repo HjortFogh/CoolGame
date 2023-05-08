@@ -5,7 +5,7 @@ export class Time {
 
     static tick() {
         for (let i = this.timers.length - 1; i >= 0; i--) {
-            if (SceneManager.getActiveScene() !== this.timers[i].scene || this.timers[i].scene.isPaused) continue;
+            if (SceneManager.getActiveScene() !== this.timers[i].scene || this.timers[i].scene.isPaused()) continue;
             this.timers[i].counter += this.deltaTime();
             if (this.timers[i].counter >= this.timers[i].time) {
                 this.timers[i].callback();

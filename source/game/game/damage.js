@@ -17,14 +17,11 @@ export class Damageable extends Engine.Model {
 
     damage(amount) {
         if (this.immune) return;
+        console.log("Took damage");
         this.entityStat.health -= amount;
         if (this.immunityTime > 0) {
-            Engine.Time.createTimer(() => this.immunityEnded(), this.immunityTime);
             this.immune = true;
+            Engine.Time.createTimer(() => (this.immune = false), this.immunityTime);
         }
-    }
-
-    immunityEnded() {
-        this.immune = false;
     }
 }

@@ -8,12 +8,13 @@ export class GameManager extends Engine.Script {
     }
 
     update() {
+        let scene = this.getScene();
         if (Engine.Input.getPressed("escape")) {
-            if (this.scene.isPaused) {
-                this.scene.unpause();
+            if (scene.isPaused()) {
+                scene.unpause();
                 Engine.Events.triggerEvent("SceneUnpaused");
             } else {
-                this.scene.pause();
+                scene.pause();
                 Engine.Events.triggerEvent("ScenePaused");
             }
         }

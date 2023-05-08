@@ -77,7 +77,7 @@ class Collider extends Controller {
             console.warn(`Event must be of type 'String'`);
             return;
         }
-        if (typeof event != "function") {
+        if (typeof callback != "function") {
             console.warn(`Callback must be of type 'Function'`);
             return;
         }
@@ -124,11 +124,11 @@ class Collider extends Controller {
         }
 
         for (let [key, value] of this.currentlyColliding) {
-            if (!this.lastColliding.has(key)) this.triggerEvent(CollisionEvent.onEnter, value);
+            if (!this.lastColliding.has(key)) this.triggerEvent("onEnter", value);
         }
 
         for (let [key, value] of this.lastColliding) {
-            if (!this.currentlyColliding.has(key)) this.triggerEvent(CollisionEvent.onExit, value);
+            if (!this.currentlyColliding.has(key)) this.triggerEvent("onExit", value);
         }
 
         this.lastColliding = this.currentlyColliding;

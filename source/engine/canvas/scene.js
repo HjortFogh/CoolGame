@@ -358,7 +358,6 @@ export class Scene {
         pop();
 
         for (let uiElement of this.#uiElements) uiElement.display();
-        this.overlay();
     }
 
     //#endregion
@@ -377,6 +376,14 @@ export class Scene {
      */
     unpause() {
         this.#isPaused = false;
+    }
+
+    /**
+     * Returns whether the Scene is paused
+     * @returns {Boolean}
+     */
+    isPaused() {
+        return this.#isPaused;
     }
 
     //#endregion
@@ -588,5 +595,13 @@ export class Script {
         }
         this.#scene = scene;
         this.start();
+    }
+
+    /**
+     * Returns the Scene bound to the Script
+     * @returns {Scene}
+     */
+    getScene() {
+        return this.#scene;
     }
 }
