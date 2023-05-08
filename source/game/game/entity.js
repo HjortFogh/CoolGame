@@ -35,3 +35,23 @@ export class EntityStat extends Engine.Model {
         for (let listener of this.onDeathListeners) listener();
     }
 }
+
+export class HealthViewer extends Engine.Viewer {
+    start() {
+        this.stat = this.gameObject.getComponent("EntityStat");
+        this.transform = this.gameObject.getComponent("Transform");
+        this.setViewLayer(20);
+    }
+
+    display() {
+        let pos = this.transform.position;
+        let w = 60;
+        let h = 20;
+
+        noStroke();
+        fill(0);
+        rect(pos.x - w / 2, pos.y + 60, w, h);
+        fill(220, 50, 20);
+        rect(pos.x - w / 2, pos.y + 60, w * (this.stat.health / this.stat.baseHealth), h);
+    }
+}

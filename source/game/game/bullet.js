@@ -4,6 +4,7 @@ class BulletViewer extends Engine.Viewer {
     start() {
         this.transform = this.gameObject.getComponent("Transform");
         this.transform.scale.set(Engine.createVector(10));
+        this.setViewLayer(5);
     }
 
     display() {
@@ -24,37 +25,58 @@ class BulletViewer extends Engine.Viewer {
     }
 }
 
-export class BasicBulletController extends Engine.Controller {
-    start(speed = 200) {
+class BasicBulletController extends Engine.Controller {
+    transform;
+    shooter;
+    speed = 400;
+
+    start() {
         this.transform = this.gameObject.getComponent("Transform");
-        this.speed = speed;
-        this.velocity = Engine.createVector(0, 0);
-        Engine.Time.createTimer(() => this.gameObject.destroy(), 5);
+
         let collider = this.gameObject.getComponent("RectCollider");
         if (collider !== undefined) collider.addListener(Engine.CollisionEvent.onEnter, (collider) => this.onCollision(collider));
+
+        Engine.Time.createTimer(() => this.gameObject.destroy(), 5);
     }
 
     update() {
-        this.transform.position.x += this.velocity.x * Engine.Time.deltaTime();
-        this.transform.position.y += this.velocity.y * Engine.Time.deltaTime();
+        let velocity = Engine.createVector(Math.cos(this.transform.rotation), Math.sin(this.transform.rotation));
+        this.transform.position.add(velocity.mult(this.speed * Engine.Time.deltaTime()));
     }
 
-    fire(position, angle) {
+    fire(shooter, position, angle, damage = 1, speed = this.speed) {
+        this.shooter = shooter;
         this.transform.position = position.copy();
-        this.velocity = Engine.createVector(cos(angle) * this.speed, sin(angle) * this.speed);
         this.transform.rotation = angle;
+        this.damage = damage;
+        this.speed = speed;
     }
 
     onCollision(collider) {
         let damageable = collider.gameObject.getComponent("Damageable");
-        if (damageable !== undefined) {
-            damageable.damage(1);
+        if (damageable !== undefined && collider.gameObject !== this.shooter) {
+            damageable.damage(this.damage);
             this.gameObject.destroy();
         }
     }
 }
 
-export function createBullet() {
-    let collider = new Engine.RectCollider(Engine.createVector(10));
-    return Engine.createGameObject(new BulletViewer(), new BasicBulletController(), collider);
+export function createBasicBullet() {
+    let bulletSize = Engine.createVector(10);
+
+    let viewer = new BulletViewer();
+    let controller = new BasicBulletController();
+    let collider = new Engine.RectCollider(bulletSize);
+
+    return Engine.createGameObject(viewer, controller, collider);
+}
+
+export function createHomingBullet() {
+    let bulletSize = Engine.createVector(10);
+
+    let viewer = new BulletViewer();
+    let controller = new BasicBulletController();
+    let collider = new Engine.RectCollider(bulletSize);
+
+    return Engine.createGameObject(viewer, controller, collider);
 }

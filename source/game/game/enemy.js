@@ -1,7 +1,7 @@
 import * as Engine from "../../engine/engine.js";
 
 import { Damageable } from "./damage.js";
-import { EntityStat } from "./entity.js";
+import { EntityStat, HealthViewer } from "./entity.js";
 
 class EnemyViewer extends Engine.Viewer {
     start() {
@@ -24,6 +24,9 @@ class BasicEnemyController extends Engine.Controller {
 
         this.stats = this.gameObject.getComponent("EntityStat");
         this.stats.addDeathListener(() => this.onDeath());
+
+        this.bulletPrefab = Engine.AssetManager.getAsset("basicBulletPrefab");
+        Engine.Time.createTimer(() => this.shoot(), 1);
     }
 
     update() {
@@ -32,7 +35,16 @@ class BasicEnemyController extends Engine.Controller {
         this.transform.position.add(move);
     }
 
+    shoot() {
+        if (this.isDead) return;
+        Engine.Time.createTimer(() => this.shoot(), 0.5);
+        let bullet = this.bulletPrefab.spawn();
+        let rotation = Math.atan2(this.playerTransform.position.y - this.transform.position.y, this.playerTransform.position.x - this.transform.position.x);
+        bullet.getComponent("BasicBulletController").fire(this.gameObject, this.transform.position, rotation, 1, 300);
+    }
+
     onDeath() {
+        this.isDead = true;
         this.gameObject.destroy();
     }
 }
@@ -43,5 +55,5 @@ export function createEnemy() {
     let collider = new Engine.RectCollider(Engine.createVector(50));
     let stat = new EntityStat();
     let damageable = new Damageable();
-    return Engine.createGameObject(controller, viewer, collider, stat, damageable);
+    return Engine.createGameObject(controller, viewer, collider, stat, damageable, new HealthViewer());
 }

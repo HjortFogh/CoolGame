@@ -1,11 +1,12 @@
-import * as Engine from "../../engine/engine.js";
+import * as Engine from "../engine/engine.js";
 
-import { createPlayer } from "./player.js";
-import { createEnemy } from "./enemy.js";
-import { createBullet } from "./bullet.js";
-import { GameManager } from "./game_manager.js";
-import { EnemySpawnerScript } from "./enemy_spawner.js";
-import { createArena } from "./arena.js";
+import { createPlayer } from "./game/player.js";
+import { createEnemy } from "./game/enemy.js";
+import { createBasicBullet, createHomingBullet } from "./game/bullet.js";
+import { GameManager } from "./game/game_manager.js";
+import { EnemySpawnerScript } from "./game/enemy_spawner.js";
+import { createArena } from "./game/arena.js";
+import { SliderTransition } from "./scene_transitions.js";
 
 export class GameScene extends Engine.Scene {
     start() {
@@ -16,10 +17,15 @@ export class GameScene extends Engine.Scene {
 
         this.addGameObject(createArena());
 
-        let bullet = createBullet();
-        let bulletPrefab = new Engine.GamePrefab(bullet);
-        this.bindGamePrefab(bulletPrefab);
-        Engine.AssetManager.addAsset(bulletPrefab, "BulletPrefab");
+        let basicBullet = createBasicBullet();
+        let basicBulletPrefab = new Engine.GamePrefab(basicBullet);
+        this.bindGamePrefab(basicBulletPrefab);
+        Engine.AssetManager.addAsset(basicBulletPrefab, "basicBulletPrefab");
+
+        // let homingBullet = createHomingBullet();
+        // let homingBulletPrefab = new Engine.GamePrefab(homingBullet);
+        // this.bindGamePrefab(homingBulletPrefab);
+        // Engine.AssetManager.addAsset(homingBulletPrefab, "homingBulletPrefab");
 
         let enemy = createEnemy();
         let enemyPrefab = new Engine.GamePrefab(enemy);
@@ -39,7 +45,7 @@ export class GameScene extends Engine.Scene {
         surface.addUIElement(new Engine.UI.Text(coolStyle, "Move with WASD", 50, 50));
         let mainMenuBtn = new Engine.UI.Button(coolStyle, 50, 100, 120, 40);
         surface.addUIElement(mainMenuBtn);
-        mainMenuBtn.addEventListener("LeftMouseReleased", () => Engine.SceneManager.changeScene("MainMenuScene"));
+        mainMenuBtn.addEventListener("LeftMouseReleased", () => Engine.SceneManager.transition(new SliderTransition(2), "MainMenuScene"));
     }
 
     onEnter() {

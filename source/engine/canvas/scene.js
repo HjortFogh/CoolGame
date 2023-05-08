@@ -1,6 +1,5 @@
 import { Time } from "../time.js";
 import { createPoint, createRect } from "../point.js";
-import { Transform } from "../components/transform.js";
 import { SpatialManager } from "../spatial_partitioning.js";
 
 // TODO: Type checking
@@ -44,7 +43,7 @@ export class SceneManager {
         this.hasEntered = true;
     }
 
-    static changeScene(sceneName) {
+    static setScene(sceneName) {
         if (!(sceneName in this.scenes)) throw `No scene with name: '${sceneName}'`;
         if (sceneName == this.activeSceneName) return;
 
@@ -52,6 +51,11 @@ export class SceneManager {
         this.activeSceneName = sceneName;
         this.activeScene = this.scenes[sceneName];
         this.activeScene.onEnter();
+    }
+
+    static changeScene(sceneName) {
+        if (SceneManager.isTransitioning) return;
+        this.setScene(sceneName);
     }
 
     static transition(newTransition, sceneName) {
@@ -135,7 +139,7 @@ export class Scene {
 
         this.displayGameObjects();
 
-        SpatialManager.display();
+        // SpatialManager.display();
 
         pop();
 
@@ -235,7 +239,7 @@ export class SceneTransition {
 
     tick() {
         this.timer += Time.deltaTime();
-        if (this.timer >= this.oldSceneDuration) SceneManager.changeScene(this.sceneName);
+        if (this.timer >= this.oldSceneDuration) SceneManager.setScene(this.sceneName);
         this.display(this.timer / this.duration);
     }
 }

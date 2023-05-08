@@ -1,4 +1,5 @@
-import { createPoint, createRect, lerpPoint, pointWithinRect } from "../point.js";
+import { createRect, lerpPoint, pointWithinRect } from "../point.js";
+import { createVector } from "../vector.js";
 import { SpatialManager } from "../spatial_partitioning.js";
 import { Controller } from "./component.js";
 
@@ -82,11 +83,11 @@ class Collider extends Controller {
     }
 
     toLocalSpacePoint(point) {
-        return createPoint(point.x - this.transform.position.x, point.y - this.transform.position.y);
+        return createVector(point.x - this.transform.position.x, point.y - this.transform.position.y);
     }
 
     toGlobalSpacePoint(point) {
-        return createPoint(this.transform.position.x + point.x, this.transform.position.y + point.y);
+        return createVector(this.transform.position.x + point.x, this.transform.position.y + point.y);
     }
 
     toGlobalSpaceRect(rect) {
@@ -95,16 +96,16 @@ class Collider extends Controller {
 }
 
 export class RectCollider extends Collider {
-    start(scale = createPoint(50, 50)) {
+    start(scale = createVector(50, 50)) {
         this.transform = this.gameObject.getComponent("Transform");
         this.aabb = createRect(-scale.x / 2, -scale.y / 2, scale.x, scale.y);
 
         // TODO: redo vert calculation based on scale
 
-        let A = createPoint(-scale.x / 2, -scale.y / 2), // TOPLEFT
-            B = createPoint(-scale.x / 2, +scale.y / 2), // BOTLEFT
-            C = createPoint(+scale.x / 2, +scale.y / 2), // BOTRIGHT
-            D = createPoint(+scale.x / 2, -scale.y / 2); // TOPRIGHT
+        let A = createVector(-scale.x / 2, -scale.y / 2), // TOPLEFT
+            B = createVector(-scale.x / 2, +scale.y / 2), // BOTLEFT
+            C = createVector(+scale.x / 2, +scale.y / 2), // BOTRIGHT
+            D = createVector(+scale.x / 2, -scale.y / 2); // TOPRIGHT
 
         this.verticies = [A, B, C, D];
 
@@ -137,7 +138,7 @@ export class CircleCollider extends Collider {
         let numPoints = Math.floor(0.4 * this.radius);
         for (let i = 0; i < numPoints; i++) {
             let angle = (TWO_PI / numPoints) * i;
-            this.verticies.push(createPoint(cos(angle) * this.radius, sin(angle) * this.radius));
+            this.verticies.push(createVector(cos(angle) * this.radius, sin(angle) * this.radius));
         }
     }
 
