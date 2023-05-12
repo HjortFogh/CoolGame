@@ -1,4 +1,4 @@
-import * as Engine from "../../engine/engine.js";
+import { Engine } from "../../engine/engine.js";
 import { EntityStat } from "./entity.js";
 
 export class Damageable extends Engine.Model {
@@ -15,9 +15,12 @@ export class Damageable extends Engine.Model {
         this.immunityTime = immunityTime;
     }
 
+    restart() {
+        this.immune = false;
+    }
+
     damage(amount) {
         if (this.immune) return;
-        console.log("Took damage");
         this.entityStat.health -= amount;
         if (this.immunityTime > 0) {
             this.immune = true;

@@ -1,5 +1,3 @@
-//TODO: Make work with mouse pressing
-
 /**
  * Handles keyboard and mouse input
  */

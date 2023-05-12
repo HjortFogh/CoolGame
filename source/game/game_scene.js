@@ -1,18 +1,54 @@
-import * as Engine from "../engine/engine.js";
+// Exports:
+// - GameScene
 
-import { createPlayer } from "./game/player.js";
+import { Engine } from "../engine/engine.js";
+import { PlayerStatusViewer, createPlayer } from "./game/player.js";
 import { createEnemy } from "./game/enemy.js";
-import { createBasicBullet, createHomingBullet } from "./game/bullet.js";
+import { createBasicBullet } from "./game/bullet.js";
 import { GameManager } from "./game/game_manager.js";
-import { EnemySpawnerScript } from "./game/enemy_spawner.js";
+import { EnemySpawnerScript, WaveInfo } from "./game/wave_manager.js";
 import { createArena } from "./game/arena.js";
+
+class PauseMenu extends Engine.UIElement {
+    start() {
+        Engine.Events.addEventListener("gameScene/paused", () => this.enabled(true));
+        Engine.Events.addEventListener("gameScene/unpaused", () => this.enabled(false));
+        this.enabled(false);
+
+        this.setSize(Engine.createVector(width, height));
+        this.addElement(new PauseModal());
+    }
+
+    displayElement() {
+        let size = this.getSize();
+        noStroke();
+        fill(255, 120);
+        rect(0, 0, size.x, size.y);
+    }
+}
+
+class PauseModal extends Engine.UIElement {
+    start() {
+        this.setPosition(Engine.createVector(200, 50));
+        this.setSize(Engine.createVector(width - 400, height - 100));
+    }
+
+    updateElement() {}
+
+    displayElement() {
+        let size = this.getSize();
+        noStroke();
+        fill(70);
+        rect(0, 0, size.x, size.y);
+    }
+}
 
 export class GameScene extends Engine.Scene {
     start() {
-        let player = createPlayer();
-        Engine.Camera.setTarget(player.getComponent("Transform"));
-        Engine.AssetManager.addAsset(player, "Player");
-        this.addGameObject(player);
+        this.player = createPlayer();
+        Engine.Camera.setTarget(this.player.getComponent("Transform"));
+        Engine.AssetManager.addAsset(this.player, "Player");
+        this.addGameObject(this.player);
 
         this.addGameObject(createArena());
 
@@ -21,34 +57,22 @@ export class GameScene extends Engine.Scene {
         this.bindGamePrefab(basicBulletPrefab);
         Engine.AssetManager.addAsset(basicBulletPrefab, "basicBulletPrefab");
 
-        // let homingBullet = createHomingBullet();
-        // let homingBulletPrefab = new Engine.GamePrefab(homingBullet);
-        // this.bindGamePrefab(homingBulletPrefab);
-        // Engine.AssetManager.addAsset(homingBulletPrefab, "homingBulletPrefab");
-
         let enemy = createEnemy();
         let enemyPrefab = new Engine.GamePrefab(enemy);
         this.bindGamePrefab(enemyPrefab);
         Engine.AssetManager.addAsset(enemyPrefab, "EnemyPrefab");
 
-        this.addScript(new GameManager());
         this.addScript(new EnemySpawnerScript());
+        this.addScript(new GameManager());
 
-        // let surface = new Engine.UI.Surface({ fillColor: [70], borderColor: [0, 0] }, 0, 0, 300, height);
-        // surface.isVisible = false;
-        // this.addUIElement(surface);
-        // Engine.Events.addEventListener("ScenePaused", () => (surface.isVisible = true));
-        // Engine.Events.addEventListener("SceneUnpaused", () => (surface.isVisible = false));
-
-        // let coolStyle = { borderColor: [255, 255, 255, 255], fillColor: [255] };
-        // surface.addUIElement(new Engine.UI.Text(coolStyle, "Move with WASD", 50, 50));
-        // let mainMenuBtn = new Engine.UI.Button(coolStyle, 50, 100, 120, 40);
-        // surface.addUIElement(mainMenuBtn);
-        // mainMenuBtn.addEventListener("LeftMouseReleased", () => Engine.SceneManager.changeScene("MainMenuScene"));
+        this.addUIElement(new PlayerStatusViewer());
+        this.addUIElement(new WaveInfo());
+        this.addUIElement(new PauseMenu());
     }
 
     onEnter() {
         noCursor();
+        Engine.Events.triggerEvent("game/started");
     }
 
     onExit() {

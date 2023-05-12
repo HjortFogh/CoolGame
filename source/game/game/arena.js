@@ -1,9 +1,9 @@
-import * as Engine from "../../engine/engine.js";
+import { Engine } from "../../engine/engine.js";
 
 class ArenaViewer extends Engine.Viewer {
     start() {
         this.transform = this.gameObject.getComponent("Transform");
-        this.transform.scale.set(Engine.createVector(3000));
+        this.transform.scale.set(Engine.createVector(5000));
         this.setViewLayer(0);
     }
 

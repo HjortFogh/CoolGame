@@ -2,6 +2,8 @@
 // - Sprite
 // - SpriteAtlas
 
+import { createVector } from "../vector.js";
+
 /**
  * A Sprite which can be drawn to the canvas
  */
@@ -47,19 +49,19 @@ export class Sprite {
 
     /**
      * Displays the Sprite
-     * @param {Float} x X-coordinate
-     * @param {Float} y Y-coordinate
-     * @param {Float} w Width
-     * @param {Float} h Height
+     * @param {Vector} position Position the Sprite should be drawn at \
+     * Default is at (0, 0)
+     * @param {Vector} size Size of Sprite \
+     * Default is the size of the loaded image
      */
-    display(x = 0, y = 0, w = undefined, h = undefined) {
+    display(position = createVector(0), size = undefined) {
         if (this.#image === undefined) return;
 
         imageMode(CENTER);
         noSmooth();
 
-        if (w === undefined || h === undefined) image(this.#image, x, y);
-        else image(this.#image, x, y, w, h);
+        if (size === undefined) image(this.#image, position.x, position.y);
+        else image(this.#image, position.x, position.y, size.x, size.y);
     }
 }
 
@@ -97,7 +99,8 @@ export class SpriteAtlas {
      * @param {Array<String>} spriteNames The names of each Sprite, for later export
      */
     split(atlas, spriteScale, spriteNames) {
-        for (let i = 0; i < spriteNames.length; i++) {
+        let numSprites = Math.ceil(atlas.width / spriteScale.x) * Math.ceil(atlas.height / spriteScale.y);
+        for (let i = 0; i < numSprites; i++) {
             let x = (i * spriteScale.x) % atlas.width;
             let y = (Math.floor((i * spriteScale.x) / atlas.width) * spriteScale.y) % atlas.height;
 
@@ -106,7 +109,7 @@ export class SpriteAtlas {
 
             let sprite = new Sprite(image);
 
-            let spriteKey = spriteNames[i];
+            let spriteKey = spriteNames[i % spriteNames.length];
 
             if (this.#sprites[spriteKey] !== undefined) {
                 if (Array.isArray(this.#sprites[spriteKey])) {

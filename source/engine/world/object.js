@@ -262,17 +262,17 @@ export class GameObject {
         return newGameObject;
     }
 
-    // /**
-    //  * Restarts a GameObject
-    //  */
-    // restart() {
-    //     if (!this.#isObjectInitialized) {
-    //         console.warn(`Cannot reset GameObject before initialization`);
-    //         return;
-    //     }
-    //     this.#isObjectDestroyed = false;
-    //     for (let [, comps] of this.#components) comps.forEach((comp) => comp.restart());
-    // }
+    /**
+     * Restarts a GameObject
+     */
+    restart() {
+        if (!this.#isObjectInitialized) {
+            console.warn(`Cannot reset GameObject before initialization`);
+            return;
+        }
+        this.#isObjectDestroyed = false;
+        for (let [, comps] of this.#components) comps.forEach((comp) => comp.restart());
+    }
 
     //#endregion
 }

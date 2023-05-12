@@ -1,4 +1,4 @@
-import * as Engine from "../../engine/engine.js";
+import { Engine } from "../../engine/engine.js";
 
 class BulletViewer extends Engine.Viewer {
     start() {
@@ -37,6 +37,7 @@ class BasicBulletController extends Engine.Controller {
         if (collider !== undefined) collider.addListener("onEnter", (collider) => this.onCollision(collider));
 
         Engine.Time.createTimer(() => this.gameObject.destroy(), 5);
+        Engine.Events.addEventListener("game/started", () => this.gameObject.destroy());
     }
 
     update() {
@@ -54,10 +55,20 @@ class BasicBulletController extends Engine.Controller {
 
     onCollision(collider) {
         let damageable = collider.gameObject.getComponent("Damageable");
-        if (damageable !== undefined && collider.gameObject !== this.shooter) {
+
+        let enemyStat = collider.gameObject.getComponent("EntityStat");
+        let myStat = this.shooter.getComponent("EntityStat");
+
+        if (damageable !== undefined && myStat.getTag() != enemyStat.getTag()) {
             damageable.damage(this.damage);
             this.gameObject.destroy();
         }
+
+        // let bulletController = collider.gameObject.getComponent("BasicBulletController");
+        // if (bulletController !== undefined && this.shooter !== bulletController.shooter) {
+        //     this.gameObject.destroy();
+        //     bulletController.gameObject.destroy();
+        // }
     }
 }
 

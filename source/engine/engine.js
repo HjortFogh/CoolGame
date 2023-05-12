@@ -1,31 +1,46 @@
-import { SceneManager, Scene, SceneTransition, Camera, Script } from "./canvas/scene.js";
-export { SceneManager, Scene, SceneTransition, Camera, Script };
-import { Input } from "./input.js";
-export { Input };
-import { AssetManager } from "./assets/assets.js";
-export { AssetManager };
-import { Model, Viewer, Controller } from "./components/component.js";
-export { Model, Viewer, Controller };
-import { Time } from "./time.js";
-export { Time };
-import { Transform } from "./components/transform.js";
-export { Transform };
-import { GameObject, GamePrefab, createGameObject } from "./canvas/object.js";
-export { GameObject, GamePrefab, createGameObject };
-import { createVector, Vector } from "./vector.js";
-export { createVector, Vector };
-import { CircleCollider, RectCollider } from "./components/collisions.js";
-export { CircleCollider, RectCollider };
-import { Events } from "./events.js";
-export { Events };
-import { UI } from "./canvas/ui.js";
-export { UI };
-import { Sprite, SpriteAtlas } from "./assets/sprite.js";
-export { Sprite, SpriteAtlas };
-import { Animation, AnimationTree, Animator, DirectionalAnimation, AnimationSelector } from "./components/animation.js";
-export { Animation, AnimationTree, Animator, DirectionalAnimation, AnimationSelector };
+// Exports:
+// - Engine
 
-export function initialize(onPreload, onInit) {
+import * as SceneImport from "./world/scene.js";
+import * as InputImport from "./input.js";
+import * as AssetsImport from "./assets/assets.js";
+import * as ComponentImport from "./components/component.js";
+import * as TimeImport from "./time.js";
+import * as TransformImport from "./components/transform.js";
+import * as ObjectImport from "./world/object.js";
+import * as VectorImport from "./vector.js";
+import * as CollisionsImport from "./components/collisions.js";
+import * as EventsImport from "./events.js";
+import * as UIImport from "./ui.js";
+import * as SpriteImport from "./assets/sprite.js";
+import * as AnimationImport from "./components/animation.js";
+
+/**
+ * The exported Engine object, which contains all modules in the Engine
+ * @type {Object}
+ */
+let Engine = {
+    ...SceneImport,
+    ...InputImport,
+    ...AssetsImport,
+    ...ComponentImport,
+    ...TimeImport,
+    ...TransformImport,
+    ...ObjectImport,
+    ...VectorImport,
+    ...CollisionsImport,
+    ...EventsImport,
+    ...UIImport,
+    ...SpriteImport,
+    ...AnimationImport,
+};
+
+/**
+ * Sets up p5.js and calls the user-provided callbacks
+ * @param {Function} onPreload Called before initialize used for loading resources
+ * @param {Function} onInit Called on initialize
+ */
+Engine.initialize = (onPreload, onInit) => {
     window.preload = () => {
         onPreload();
     };
@@ -36,13 +51,15 @@ export function initialize(onPreload, onInit) {
     };
 
     window.draw = () => {
-        Time.tick();
-        SceneManager.tick();
-        Input.tick();
+        TimeImport.Time.tick();
+        SceneImport.SceneManager.tick();
+        InputImport.Input.tick();
     };
 
-    window.keyPressed = () => Input.keyPressed(key);
-    window.keyReleased = () => Input.keyReleased(key);
-    window.mousePressed = () => Input.keyPressed(mouseButton);
-    window.mouseReleased = () => Input.keyReleased(mouseButton);
-}
+    window.keyPressed = () => InputImport.Input.keyPressed(key);
+    window.keyReleased = () => InputImport.Input.keyReleased(key);
+    window.mousePressed = () => InputImport.Input.keyPressed(mouseButton);
+    window.mouseReleased = () => InputImport.Input.keyReleased(mouseButton);
+};
+
+export { Engine };

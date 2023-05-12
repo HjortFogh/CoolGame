@@ -9,7 +9,7 @@ import { Time } from "../time.js";
 import { SpatialManager } from "../spatial_partitioning.js";
 import { Vector, createVector } from "../vector.js";
 import { GameObject, GamePrefab } from "./object.js";
-import { Transform } from "../engine.js";
+import { Transform } from "../components/transform.js";
 
 /**
  * Manages Scene(s) and SceneTransition(s)
@@ -158,16 +158,12 @@ export class SceneManager {
     }
 
     /**
+     * Gets the active Scene
      * @returns {Scene}
      * @static
      */
     static getActiveScene() {
         return SceneManager.#activeScene;
-    }
-
-    static changeScene(sceneName) {
-        if (SceneManager.isTransitioning) return;
-        this.setScene(sceneName);
     }
 
     /**
