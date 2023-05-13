@@ -2,14 +2,21 @@
 // - GameScene
 
 import { Engine } from "../engine/engine.js";
-import { PlayerStatusViewer, createPlayer } from "./game/player.js";
+import { createPlayer } from "./game/player.js";
 import { createEnemy } from "./game/enemy.js";
-import { createBasicBullet } from "./game/bullet.js";
 import { GameManager } from "./game/game_manager.js";
-import { EnemySpawnerScript, WaveInfo } from "./game/wave_manager.js";
 import { createArena } from "./game/arena.js";
+import { BasicSceneTransition, Button } from "./misc.js";
+import { createFireball, createWaterball } from "./game/bullet.js";
+import { PlayerHealthbar, WaveInfo } from "./game/game_ui.js";
 
+/**
+ * Menu which is displayed when the game is paused
+ */
 class PauseMenu extends Engine.UIElement {
+    /**
+     * Add event listeners and create a PauseModal
+     */
     start() {
         Engine.Events.addEventListener("gameScene/paused", () => this.enabled(true));
         Engine.Events.addEventListener("gameScene/unpaused", () => this.enabled(false));
@@ -19,6 +26,9 @@ class PauseMenu extends Engine.UIElement {
         this.addElement(new PauseModal());
     }
 
+    /**
+     * Display transparent white background when paused
+     */
     displayElement() {
         let size = this.getSize();
         noStroke();
@@ -27,14 +37,27 @@ class PauseMenu extends Engine.UIElement {
     }
 }
 
+/**
+ * The main part of the pause menu
+ */
 class PauseModal extends Engine.UIElement {
+    /**
+     * Create button which will take the player to the main menu
+     */
     start() {
-        this.setPosition(Engine.createVector(200, 50));
-        this.setSize(Engine.createVector(width - 400, height - 100));
+        this.setPosition(Engine.createVector(400, 50));
+        this.setSize(Engine.createVector(width - 800, height - 100));
+        let mainMenuBtn = new Button();
+        mainMenuBtn.setText("Quit game");
+        mainMenuBtn.setSize(Engine.createVector(200, 120));
+        mainMenuBtn.setPosition(Engine.createVector((width - 800 - 200) / 2, 100));
+        mainMenuBtn.onLeftPress = () => Engine.SceneManager.transition(new BasicSceneTransition(2), "MainMenuScene");
+        this.addElement(mainMenuBtn);
     }
 
-    updateElement() {}
-
+    /**
+     * Display the modal popup
+     */
     displayElement() {
         let size = this.getSize();
         noStroke();
@@ -43,53 +66,63 @@ class PauseModal extends Engine.UIElement {
     }
 }
 
+/**
+ * Scene which contains the game
+ */
 export class GameScene extends Engine.Scene {
+    /**
+     * Setup player, enemy, bullets and pause menu
+     */
     start() {
-        this.player = createPlayer();
-        Engine.Camera.setTarget(this.player.getComponent("Transform"));
-        Engine.AssetManager.addAsset(this.player, "Player");
-        this.addGameObject(this.player);
-
+        // Setup arena
+        Engine.AssetManager.addAsset(2500, "arenaRadius");
         this.addGameObject(createArena());
 
-        let basicBullet = createBasicBullet();
-        let basicBulletPrefab = new Engine.GamePrefab(basicBullet);
-        this.bindGamePrefab(basicBulletPrefab);
-        Engine.AssetManager.addAsset(basicBulletPrefab, "basicBulletPrefab");
+        // Setup fire- and waterball
+        let fireballPrefab = new Engine.GamePrefab(createFireball());
+        this.bindGamePrefab(fireballPrefab);
+        Engine.AssetManager.addAsset(fireballPrefab, "fireballPrefab");
+        let waterballPrefab = new Engine.GamePrefab(createWaterball());
+        this.bindGamePrefab(waterballPrefab);
+        Engine.AssetManager.addAsset(waterballPrefab, "waterballPrefab");
 
-        let enemy = createEnemy();
-        let enemyPrefab = new Engine.GamePrefab(enemy);
+        // Setup player
+        let player = createPlayer();
+        Engine.Camera.setTarget(player.getComponent("Transform"));
+        Engine.AssetManager.addAsset(player, "player");
+        this.addGameObject(player);
+
+        let enemyPrefab = new Engine.GamePrefab(createEnemy());
         this.bindGamePrefab(enemyPrefab);
-        Engine.AssetManager.addAsset(enemyPrefab, "EnemyPrefab");
+        Engine.AssetManager.addAsset(enemyPrefab, "enemyPrefab");
 
-        this.addScript(new EnemySpawnerScript());
+        // Game manager
         this.addScript(new GameManager());
 
-        this.addUIElement(new PlayerStatusViewer());
-        this.addUIElement(new WaveInfo());
+        // Pause menu, player health and wave info
         this.addUIElement(new PauseMenu());
+        this.addUIElement(new PlayerHealthbar());
+        this.addUIElement(new WaveInfo());
     }
 
+    /**
+     * Start game when GameScene is set active
+     */
     onEnter() {
-        noCursor();
         Engine.Events.triggerEvent("game/started");
     }
 
+    /**
+     * Stop the game when GameScene is set deactive
+     */
     onExit() {
-        cursor();
+        Engine.Events.triggerEvent("game/ended");
     }
 
+    /**
+     * Fill a gray background
+     */
     background() {
         background(80);
-    }
-
-    overlay() {
-        strokeWeight(2);
-        stroke(255);
-        fill(0, 0);
-        // fill(55, 105, 155);
-        circle(mouseX, mouseY, 20);
-        line(mouseX, mouseY - 20, mouseX, mouseY + 20);
-        line(mouseX - 20, mouseY, mouseX + 20, mouseY);
     }
 }

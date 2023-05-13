@@ -1,80 +1,168 @@
-import { Engine } from "../../engine/engine.js";
+// Exports:
+// - createPlayer
 
-import { Damageable } from "./damage.js";
+import { Engine } from "../../engine/engine.js";
 import { EntityStat } from "./entity.js";
 
+/**
+ * @type {Vector}
+ * @constant
+ */
 const PLAYER_SCALE = Engine.createVector(65, 130);
 
+/**
+ * Controlls the player movement
+ */
 class PlayerController extends Engine.Controller {
+    /**
+     * @type {Transform}
+     */
+    #transform;
+    /**
+     * @type {EntityStat}
+     */
+    #playerStat;
+    /**
+     * @type {AnimationTree}
+     */
+    #animationTree;
+
+    /**
+     * @type {Int}
+     */
+    #speed = 400;
+    /**
+     * @type {Float}
+     */
+    #shootCooldownTime = 0.05;
+    /**
+     * @type {Float}
+     */
+    #lastShot = 0;
+    /**
+     * @type {Float}
+     */
+    #dashTime = 0.5;
+    /**
+     * @type {Boolean}
+     */
+    #isDashing = false;
+    /**
+     * @type {Vector}
+     */
+    #dashingVelocity;
+
+    /**
+     * Retrives all resources used by the player
+     */
     start() {
-        this.transform = this.gameObject.getComponent("Transform");
-        this.transform.scale.set(PLAYER_SCALE);
+        // Transform
+        this.#transform = this.gameObject.getComponent("Transform");
+        this.#transform.scale.set(PLAYER_SCALE);
 
-        this.stat = this.gameObject.getComponent("EntityStat");
-        this.stat.addEventListener("death", () => this.onDeath());
-        this.stat.addEventListener("damage", (damageAmount) => Engine.Events.triggerEvent("player/damage", damageAmount));
+        // Player stat
+        this.#playerStat = this.gameObject.getComponent("EntityStat");
+        this.#playerStat.addEventListener("death", () => this.onDeath());
+        this.#playerStat.addEventListener("damage", () => Engine.Events.triggerEvent("player/damage"));
 
-        this.bulletPrefab = Engine.AssetManager.getAsset("basicBulletPrefab");
-        // this.bulletTime = 0;
+        // Animation tree
+        this.#animationTree = this.gameObject.getComponent("AnimationTree");
 
-        console.log("Start");
-
-        this.animationTree = this.gameObject.getComponent("AnimationTree");
-        Engine.Events.addEventListener("game/started", () => this.gameObject.restart());
+        // Events
+        Engine.Events.addEventListener("game/started", () => {
+            this.gameObject.restart();
+            this.#isDashing = false;
+        });
     }
 
+    /**
+     * Restarts the player when a new game is started
+     */
     restart() {
-        this.transform.scale.set(PLAYER_SCALE);
-        this.animationTree.setProperty("direction", Engine.createVector(0, 1));
+        this.#transform.scale.set(PLAYER_SCALE);
+        this.#animationTree.setProperty("direction", Engine.createVector(0, 1));
     }
 
+    /**
+     * Updates the players position and checks if the player is dashing or shooting
+     */
     update() {
-        let velocity = Engine.createVector(Engine.Input.getInput("d") - Engine.Input.getInput("a"), Engine.Input.getInput("s") - Engine.Input.getInput("w"));
-        this.animationTree.setProperty("direction", velocity.normalize());
-        if (!velocity.isZero()) this.animationTree.transition("move");
-        else this.animationTree.transition("idle");
-        velocity.mult(this.stat.speed * Engine.Time.deltaTime());
-        this.transform.position.add(velocity);
+        if (Engine.Input.getPressed("r")) this.onDeath();
 
-        this.transform.rotation = Math.atan2(mouseY - height / 2, mouseX - width / 2);
+        // WASD direction
+        let velocity = Engine.createVector(
+            Engine.Input.getInput("d") - Engine.Input.getInput("a"),
+            Engine.Input.getInput("s") - Engine.Input.getInput("w")
+        ).normalize();
 
-        // if (Engine.Input.getInput("left") && this.bulletTime <= 0) {
-        //     this.bulletTime = 0.05;
-        //     let bullet = this.bulletPrefab.spawn();
-        //     bullet.getComponent("BasicBulletController").fire(this.transform.position, this.transform.rotation - 0.1);
-        //     bullet = this.bulletPrefab.spawn();
-        //     bullet.getComponent("BasicBulletController").fire(this.transform.position, this.transform.rotation);
-        //     bullet = this.bulletPrefab.spawn();
-        //     bullet.getComponent("BasicBulletController").fire(this.transform.position, this.transform.rotation + 0.1);
-        // }
-        // this.bulletTime -= Engine.Time.deltaTime();
+        // Normal movement when not dashing
+        if (!this.#isDashing) {
+            this.#animationTree.setProperty("direction", velocity);
+            if (!velocity.isZero()) this.#animationTree.transition("move");
+            else this.#animationTree.transition("idle");
 
-        if (Engine.Input.getReleased("e")) {
-            for (let i = 0; i < 50; i++) {
-                let bullet = this.bulletPrefab.spawn();
-                let rotation = Math.random() * Math.PI * 2;
-                bullet.getComponent("BasicBulletController").fire(this.gameObject, this.transform.position, rotation);
-            }
+            velocity.mult(this.#speed * Engine.Time.deltaTime());
+            this.#transform.position.add(velocity);
+        }
+        // Movement when dashing
+        else {
+            this.#transform.position.add(this.#dashingVelocity);
+        }
+
+        // Force player to remain within arena
+        let arenaRadius = Engine.AssetManager.getAsset("arenaRadius");
+        if (this.#transform.position.magnitude() >= arenaRadius) this.#transform.position.setMagnitude(arenaRadius);
+
+        // Shoot on left mouse with cooldown
+        if (Engine.Input.getInput("left") && Engine.Time.now() - this.#lastShot >= this.#shootCooldownTime) {
+            let rotation = Math.atan2(mouseY - height / 2, mouseX - width / 2);
+            let fireballPrefab = Engine.AssetManager.getAsset("fireballPrefab");
+
+            let bullet = fireballPrefab.spawn();
+            bullet.getComponent("BulletController").fire(this.gameObject, rotation - 0.1);
+            bullet = fireballPrefab.spawn();
+            bullet.getComponent("BulletController").fire(this.gameObject, rotation);
+            bullet = fireballPrefab.spawn();
+            bullet.getComponent("BulletController").fire(this.gameObject, rotation + 0.1);
+            this.#lastShot = Engine.Time.now();
+        }
+
+        // Dash on e
+        if (Engine.Input.getReleased("e") && !this.#isDashing) {
+            this.#isDashing = true;
+            this.#dashingVelocity = velocity.mult(3);
+            this.#animationTree.transition("dash");
+            Engine.Time.createTimer(() => {
+                this.#isDashing = false;
+                this.#animationTree.transition("dashEnded");
+            }, this.#dashTime);
         }
     }
 
+    /**
+     * When the player dies
+     */
     onDeath() {
-        this.animationTree.transition("death");
+        this.#animationTree.transition("death");
         Engine.Events.triggerEvent("player/died");
     }
 }
 
+/**
+ * Creates the player
+ * @returns {GameObject}
+ */
 export function createPlayer() {
     let controller = new PlayerController();
-
-    let stat = new EntityStat({ baseHealth: 2, baseSpeed: 400 });
-    stat.setTag("Player");
-    let damageable = new Damageable(2);
     let collider = new Engine.RectCollider(PLAYER_SCALE);
+
+    let playerStat = new EntityStat(9, 1);
+    playerStat.setTag("Player");
 
     let viewer = new Engine.AnimationTree();
     viewer.setViewLayer(10);
 
+    // Setup the player animation tree
     viewer.onInitialize(() => {
         // Idle animation
 
@@ -91,6 +179,8 @@ export function createPlayer() {
         idleSelector.addAnimation(new Engine.Animation(playerIdleAnimation.downLeft, 1.4), "idleDownLeft", Engine.createVector(-1, 1).normalize());
 
         viewer.addAnimationSelector(idleSelector, "idle");
+        viewer.addTransition("idle", "move", "move");
+        viewer.addTransition("idle", "dead", "death");
 
         // Move animation
 
@@ -107,24 +197,29 @@ export function createPlayer() {
         moveSelector.addAnimation(new Engine.Animation(playerMoveAnimation.downLeft, 1.4), "moveDownLeft", Engine.createVector(-1, 1).normalize());
 
         viewer.addAnimationSelector(moveSelector, "move");
+        viewer.addTransition("move", "idle", "idle");
+        viewer.addTransition("move", "dash", "dash");
+        viewer.addTransition("move", "dead", "death");
 
         // Dash animation
 
-        // let dashSelector = new Engine.DirectionalAnimation();
-        // let playerDashAnimation = Engine.AssetManager.getAsset("playerDashAnimation").export();
+        let dashSelector = new Engine.DirectionalAnimation();
+        let playerDashAnimation = Engine.AssetManager.getAsset("playerDashAnimation").export();
 
-        // dashSelector.addAnimation(new Engine.Animation(sprites.down, 1.4), "dashDown", Engine.createVector(0, 1));
-        // dashSelector.addAnimation(new Engine.Animation(sprites.downRight, 1.4), "dashDownRight", Engine.createVector(1, 1).normalize());
-        // dashSelector.addAnimation(new Engine.Animation(sprites.right, 1.4), "dashRight", Engine.createVector(1, 0));
-        // dashSelector.addAnimation(new Engine.Animation(sprites.upRight, 1.4), "dashUpRight", Engine.createVector(1, -1).normalize());
-        // dashSelector.addAnimation(new Engine.Animation(sprites.up, 1.4), "dashUp", Engine.createVector(0, -1));
-        // dashSelector.addAnimation(new Engine.Animation(sprites.upLeft, 1.4), "dashUpLeft", Engine.createVector(-1, -1).normalize());
-        // dashSelector.addAnimation(new Engine.Animation(sprites.left, 1.4), "dashLeft", Engine.createVector(-1, 0));
-        // dashSelector.addAnimation(new Engine.Animation(sprites.downLeft, 1.4), "dashDownLeft", Engine.createVector(-1, 1).normalize());
+        dashSelector.addAnimation(new Engine.Animation(playerDashAnimation.down, 1.4), "dashDown", Engine.createVector(0, 1));
+        dashSelector.addAnimation(new Engine.Animation(playerDashAnimation.downRight, 1.4), "dashDownRight", Engine.createVector(1, 1).normalize());
+        dashSelector.addAnimation(new Engine.Animation(playerDashAnimation.right, 1.4), "dashRight", Engine.createVector(1, 0));
+        dashSelector.addAnimation(new Engine.Animation(playerDashAnimation.upRight, 1.4), "dashUpRight", Engine.createVector(1, -1).normalize());
+        dashSelector.addAnimation(new Engine.Animation(playerDashAnimation.up, 1.4), "dashUp", Engine.createVector(0, -1));
+        dashSelector.addAnimation(new Engine.Animation(playerDashAnimation.upLeft, 1.4), "dashUpLeft", Engine.createVector(-1, -1).normalize());
+        dashSelector.addAnimation(new Engine.Animation(playerDashAnimation.left, 1.4), "dashLeft", Engine.createVector(-1, 0));
+        dashSelector.addAnimation(new Engine.Animation(playerDashAnimation.downLeft, 1.4), "dashDownLeft", Engine.createVector(-1, 1).normalize());
 
-        // viewer.addAnimationSelector(dashSelector, "dash");
+        viewer.addAnimationSelector(dashSelector, "dash");
+        viewer.addTransition("dash", "idle", "dashEnded");
+        viewer.addTransition("dash", "dead", "death");
 
-        // Dead animation
+        // Death animation
 
         let deadSelector = new Engine.AnimationSelector();
         let playerDeathAnimation = Engine.AssetManager.getAsset("playerDeathAnimation").export();
@@ -132,99 +227,7 @@ export function createPlayer() {
         deadSelector.addAnimation(new Engine.Animation(playerDeathAnimation.death, 3, false), "deadDown");
 
         viewer.addAnimationSelector(deadSelector, "dead");
-
-        // Transitions
-
-        viewer.addTransition("idle", "move", "move");
-        viewer.addTransition("idle", "dead", "death");
-
-        viewer.addTransition("move", "idle", "idle");
-        // viewer.addTransition("move", "dash", "dash");
-        viewer.addTransition("move", "dead", "death");
-
-        // viewer.addTransition("dash", "idle", "----");
-        // viewer.addTransition("dash", "move", "----");
-        // viewer.addTransition("dash", "dead", "death");
     });
 
-    return Engine.createGameObject(controller, stat, damageable, collider, viewer);
-}
-
-class PlayerHealthbar extends Engine.UIElement {
-    start() {
-        this.playerStat = Engine.AssetManager.getAsset("Player").getComponent("EntityStat");
-        this.setSize(Engine.createVector(300, 50));
-    }
-
-    displayElement() {
-        let size = this.getSize();
-        noStroke();
-
-        fill(140);
-        rect(0, 0, size.x, size.y);
-
-        let percentHealth = this.playerStat.health / this.playerStat.baseHealth;
-        fill(229, 58, 45);
-        rect(0, 0, size.x * percentHealth, size.y);
-
-        strokeWeight(4);
-        stroke(70);
-        for (let i = 0; i < this.playerStat.baseHealth - 1; i++) {
-            let x = (i + 1) * (size.x / this.playerStat.baseHealth);
-            line(x, 0, x, 10);
-            line(x, size.y, x, size.y - 10);
-        }
-    }
-}
-
-class PlayerImmunitybar extends Engine.UIElement {
-    timer = 0;
-    playerTookDamage = false;
-    isScenePaused = false;
-
-    start() {
-        this.playerDamageable = Engine.AssetManager.getAsset("Player").getComponent("Damageable");
-        Engine.Events.addEventListener("game/started", () => (this.playerTookDamage = false));
-        Engine.Events.addEventListener("player/damage", () => this.startTimer());
-        this.setSize(Engine.createVector(300, 8));
-        Engine.Events.addEventListener("gameScene/paused", () => (this.isScenePaused = true));
-        Engine.Events.addEventListener("gameScene/unpaused", () => (this.isScenePaused = false));
-    }
-
-    startTimer() {
-        this.playerTookDamage = true;
-        this.timer = 0;
-    }
-
-    displayElement() {
-        if (!this.playerTookDamage) return;
-
-        if (!this.isScenePaused) this.timer += Engine.Time.deltaTime();
-
-        let dist = this.timer / this.playerDamageable.immunityTime;
-        if (dist >= 1.0) this.playerTookDamage = false;
-
-        noStroke();
-        fill(255);
-
-        let size = this.getSize();
-        rect(0, 0, size.x * (1 - dist), size.y);
-    }
-}
-
-export class PlayerStatusViewer extends Engine.UIElement {
-    start() {
-        Engine.Events.addEventListener("player/died", () => this.enabled(false));
-        Engine.Events.addEventListener("game/started", () => this.enabled(true));
-
-        this.setPosition(Engine.createVector(50, 30));
-
-        let healthbar = new PlayerHealthbar();
-        healthbar.setPosition(Engine.createVector(0));
-        this.addElement(healthbar);
-
-        let immunitybar = new PlayerImmunitybar();
-        immunitybar.setPosition(Engine.createVector(0, healthbar.getSize().y));
-        this.addElement(immunitybar);
-    }
+    return Engine.createGameObject(controller, collider, playerStat, viewer);
 }

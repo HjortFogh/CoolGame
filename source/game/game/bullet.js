@@ -1,93 +1,167 @@
+// Exports:
+// - createFireball
+// - createWaterball
+
 import { Engine } from "../../engine/engine.js";
 
-class BulletViewer extends Engine.Viewer {
+/**
+ * @type {Int}
+ * @constant
+ */
+const BULLET_RADIUS = 20;
+
+/**
+ * Controlls the movement of a bullet
+ */
+class BulletController extends Engine.Controller {
+    /**
+     * @type {Transform}
+     */
+    #transform;
+    /**
+     * @type {Boolean}
+     */
+    #isFired = false;
+    /**
+     * @type {Int}
+     */
+    #speed = 350;
+    /**
+     * Range 0 to pi*2
+     * @type {Float}
+     */
+    #direction = 0;
+    /**
+     * @type {GameObject}
+     */
+    #shooter;
+
+    /**
+     * Retrives the Transform of the bullet and sets up kill timer after 5 seconds and collision events
+     */
     start() {
-        this.transform = this.gameObject.getComponent("Transform");
-        this.transform.scale.set(Engine.createVector(10));
-        this.setViewLayer(5);
-    }
-
-    display() {
-        noStroke();
-        fill(0);
-        let x = this.transform.position.x;
-        let y = this.transform.position.y;
-        let a = this.transform.rotation;
-        let s = this.transform.scale.x;
-
-        let x1 = x + Math.cos(a) * s;
-        let y1 = y + Math.sin(a) * s;
-        let x2 = x + Math.cos(a + (Math.PI * 2) / 3) * s * 0.7;
-        let y2 = y + Math.sin(a + (Math.PI * 2) / 3) * s * 0.7;
-        let x3 = x + Math.cos(a + (Math.PI * 4) / 3) * s * 0.7;
-        let y3 = y + Math.sin(a + (Math.PI * 4) / 3) * s * 0.7;
-        triangle(x1, y1, x2, y2, x3, y3);
-    }
-}
-
-class BasicBulletController extends Engine.Controller {
-    transform;
-    shooter;
-    speed = 400;
-
-    start() {
-        this.transform = this.gameObject.getComponent("Transform");
-
-        let collider = this.gameObject.getComponent("RectCollider");
-        if (collider !== undefined) collider.addListener("onEnter", (collider) => this.onCollision(collider));
-
+        this.#transform = this.gameObject.getComponent("Transform");
+        this.gameObject.getComponent("CircleCollider").addListener("onEnter", (collider) => this.onTargetHit(collider));
         Engine.Time.createTimer(() => this.gameObject.destroy(), 5);
         Engine.Events.addEventListener("game/started", () => this.gameObject.destroy());
     }
 
+    /**
+     * Fires the bullet in a direction
+     * @param {GameObject} shooter GameObject of the shooter
+     * @param {Float} direction Angle in range 0 to pi*2
+     */
+    fire(shooter, direction) {
+        this.#isFired = true;
+        this.#transform.position.set(shooter.getComponent("Transform").position);
+        this.#shooter = shooter;
+        this.#direction = direction;
+    }
+
+    /**
+     * Updates the position of the bullet
+     */
     update() {
-        let velocity = Engine.createVector(Math.cos(this.transform.rotation), Math.sin(this.transform.rotation));
-        this.transform.position.add(velocity.mult(this.speed * Engine.Time.deltaTime()));
+        if (!this.#isFired) return;
+        let velocity = Engine.createVector(Math.cos(this.#direction), Math.sin(this.#direction)).mult(this.#speed * Engine.Time.deltaTime());
+        this.#transform.position.add(velocity);
     }
 
-    fire(shooter, position, angle, damage = 1, speed = this.speed) {
-        this.shooter = shooter;
-        this.transform.position = position.copy();
-        this.transform.rotation = angle;
-        this.damage = damage;
-        this.speed = speed;
-    }
+    /**
+     * Called when the bullet hits a target
+     * @param {Collider} collider Collider of target
+     */
+    onTargetHit(collider) {
+        let entityStat = collider.gameObject.getComponent("EntityStat");
+        let shooterStat = this.#shooter.getComponent("EntityStat");
 
-    onCollision(collider) {
-        let damageable = collider.gameObject.getComponent("Damageable");
+        if (entityStat === undefined || shooterStat === undefined) return;
 
-        let enemyStat = collider.gameObject.getComponent("EntityStat");
-        let myStat = this.shooter.getComponent("EntityStat");
-
-        if (damageable !== undefined && myStat.getTag() != enemyStat.getTag()) {
-            damageable.damage(this.damage);
+        if (shooterStat.getTag() != entityStat.getTag()) {
+            entityStat.damage(shooterStat.getDamage());
             this.gameObject.destroy();
         }
-
-        // let bulletController = collider.gameObject.getComponent("BasicBulletController");
-        // if (bulletController !== undefined && this.shooter !== bulletController.shooter) {
-        //     this.gameObject.destroy();
-        //     bulletController.gameObject.destroy();
-        // }
     }
 }
 
-export function createBasicBullet() {
-    let bulletSize = Engine.createVector(10);
+/**
+ * Displays a fireball which is fired by the player
+ */
+class FireballViewer extends Engine.Viewer {
+    /**
+     * @type {Transform}
+     */
+    transform;
+    /**
+     * @type {Sprite}
+     */
+    fireballSprite;
 
-    let viewer = new BulletViewer();
-    let controller = new BasicBulletController();
-    let collider = new Engine.RectCollider(bulletSize);
+    /**
+     * Get the transform and sprite
+     */
+    start() {
+        this.transform = this.gameObject.getComponent("Transform");
+        this.fireballSprite = Engine.AssetManager.getAsset("fireball");
+        this.transform.scale = Engine.createVector(BULLET_RADIUS * 2);
+    }
 
-    return Engine.createGameObject(viewer, controller, collider);
+    /**
+     * Display the fireball
+     */
+    display() {
+        this.fireballSprite.display(this.transform.position, this.transform.scale);
+    }
 }
 
-export function createHomingBullet() {
-    let bulletSize = Engine.createVector(10);
+/**
+ * Displays a fireball which is fired by the enemy
+ */
+class WaterballViewer extends Engine.Viewer {
+    /**
+     * @type {Transform}
+     */
+    transform;
+    /**
+     * @type {Sprite}
+     */
+    waterballSprite;
 
-    let viewer = new BulletViewer();
-    let controller = new BasicBulletController();
-    let collider = new Engine.RectCollider(bulletSize);
+    /**
+     * Get the transform and sprite
+     */
+    start() {
+        this.transform = this.gameObject.getComponent("Transform");
+        this.waterballSprite = Engine.AssetManager.getAsset("waterball");
+        this.transform.scale = Engine.createVector(BULLET_RADIUS * 2);
+    }
 
-    return Engine.createGameObject(viewer, controller, collider);
+    /**
+     * Display the waterball
+     */
+    display() {
+        this.waterballSprite.display(this.transform.position, this.transform.scale);
+    }
+}
+
+/**
+ * Creates a new fireball
+ * @returns {GameObject}
+ */
+export function createFireball() {
+    let controller = new BulletController();
+    let viewer = new FireballViewer();
+    let collider = new Engine.CircleCollider(BULLET_RADIUS);
+    return Engine.createGameObject(controller, viewer, collider);
+}
+
+/**
+ * Creates a new wateball
+ * @returns {GameObject}
+ */
+export function createWaterball() {
+    let controller = new BulletController();
+    let viewer = new WaterballViewer();
+    let collider = new Engine.CircleCollider(BULLET_RADIUS);
+    return Engine.createGameObject(controller, viewer, collider);
 }

@@ -102,7 +102,6 @@ class Collider extends Controller {
 
     /**
      * Calculates all collisions within bounding box
-     * // TODO:
      */
     update() {
         // Get all GameObject(s) within a certain area of the current collider

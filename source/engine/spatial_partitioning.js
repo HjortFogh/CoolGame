@@ -6,6 +6,7 @@ import { createRect, pointWithinRect, rectOverlap } from "./vector.js";
 /**
  * Number of points per tree, before it is further sub-divided
  * @type {Int}
+ * @constant
  */
 const TREE_CAPACITY = 8;
 

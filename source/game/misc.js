@@ -31,7 +31,7 @@ export class Button extends Engine.UIElement {
         stroke(255);
         fill(255);
         textFont("monospace");
-        textSize(40);
+        textSize(30);
         textAlign(CENTER, CENTER);
 
         text(this.#displayText, size.x / 2, yOffset + size.y / 2);

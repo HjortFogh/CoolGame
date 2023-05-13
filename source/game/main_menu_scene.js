@@ -21,12 +21,13 @@ class ControllsInformation extends Engine.UIElement {
         stroke(255);
         fill(255);
         textFont("monospace");
-        textSize(30);
+        textSize(20);
         textAlign(CENTER, CENTER);
 
-        text("Use WASD to move", size.x / 2, 100);
-        text("Use E to dash", size.x / 2, 200);
-        text("Use Left mouse to shoot", size.x / 2, 300);
+        text("Use WASD to move", size.x / 2, 80);
+        text("Use E to dash", size.x / 2, 160);
+        text("Use Left mouse to shoot", size.x / 2, 240);
+        text("Use ESC to pause game", size.x / 2, 320);
     }
 }
 

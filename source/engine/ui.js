@@ -170,6 +170,8 @@ export class UIElement {
      * Call the virtual methods for pressing and hovering
      */
     update() {
+        if (!this.#shouldDisplay) return;
+
         if (this.isHovering()) {
             if (!this.#isMouseHovering) this.onHoverEnter();
             this.isMouseHovering = true;

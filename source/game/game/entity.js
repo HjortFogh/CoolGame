@@ -1,56 +1,114 @@
+// Exports:
+// - EntityStat
+
 import { Engine } from "../../engine/engine.js";
 
+/**
+ * The stats of either the player or an enemy
+ */
 export class EntityStat extends Engine.Model {
-    startingStats = {};
-    baseHealth = 3;
-    currentHealth = this.baseHealth;
-    baseDamage = 0.5;
-    baseSpeed = 200;
+    /**
+     * @type {Int}
+     */
+    #startingHealth;
+    /**
+     * @type {Int}
+     */
+    #health;
+    /**
+     * @type {Int}
+     */
+    #damage;
+    /**
+     * @type {Object}
+     */
+    #listeners = {};
+    /**
+     * @type {Array<Function>}
+     */
+    #tag = "";
 
-    listeners = {};
-
-    tag = "";
-
-    set health(amount) {
-        if (amount < this.currentHealth) this.triggerEvent("damage", this.currentHealth - amount);
-        this.currentHealth = amount;
-        if (this.currentHealth <= 0) this.triggerEvent("death");
+    /**
+     * Starts the EntityStat Component
+     * @param {Int} health Amount of starting health
+     * @param {Int} damage The damage amount of the entity
+     */
+    start(health = 5, damage = 1) {
+        this.#startingHealth = this.#health = health;
+        this.#damage = damage;
     }
-    get health() {
-        return this.currentHealth;
-    }
 
-    get speed() {
-        return this.baseSpeed;
-    }
-
-    start(stats = {}) {
-        this.startingStats = stats;
-        this.restart();
-    }
-
+    /**
+     * Reset the entity when the game is reset
+     */
     restart() {
-        if ("baseHealth" in this.startingStats) this.baseHealth = this.startingStats.baseHealth;
-        if ("baseHealth" in this.startingStats) this.health = this.startingStats.baseHealth;
-        if ("baseDamage" in this.startingStats) this.baseDamage = this.startingStats.baseDamage;
-        if ("baseSpeed" in this.startingStats) this.baseSpeed = this.startingStats.baseSpeed;
+        this.#health = this.#startingHealth;
     }
 
-    setTag(tagName) {
-        this.tag = tagName;
+    /**
+     * Damage the entity
+     * @param {Int} amount
+     */
+    damage(amount) {
+        this.#health -= amount;
+        this.triggerEvent("damage");
+        if (this.#health <= 0) this.triggerEvent("death");
     }
 
-    getTag() {
-        return this.tag;
+    /**
+     * Returns the damage
+     * @returns {Int}
+     */
+    getDamage() {
+        return this.#damage;
     }
 
+    /**
+     * @returns {Float} The percent of health left from 0 to 1
+     */
+    getHealthPercentage() {
+        return this.#health / this.#startingHealth;
+    }
+
+    /**
+     * @returns {Int} The starting health
+     */
+    getStartingHealth() {
+        return this.#startingHealth;
+    }
+
+    /**
+     * Adds a callback to a event ("death", "damage")
+     * @param {String} event
+     * @param {Function} callback
+     */
     addEventListener(event, callback) {
-        if (this.listeners[event] === undefined) this.listeners[event] = [];
-        this.listeners[event].push(callback);
+        if (this.#listeners[event] === undefined) this.#listeners[event] = [];
+        this.#listeners[event].push(callback);
     }
 
-    triggerEvent(event, ...data) {
-        if (this.listeners[event] === undefined) return;
-        for (let listener of this.listeners[event]) listener(...data);
+    /**
+     * Trigger an event
+     * @param {String} event
+     */
+    triggerEvent(event) {
+        if (this.#listeners[event] === undefined) return;
+        for (let listener of this.#listeners[event]) listener();
+    }
+
+    /**
+     * Sets the tag
+     * @param {String} tag
+     */
+    setTag(tag) {
+        this.#tag = tag;
+    }
+
+    /**
+     * Returns the tag of the entity
+     * @returns {String}
+     */
+    getTag() {
+        return this.#tag;
     }
 }

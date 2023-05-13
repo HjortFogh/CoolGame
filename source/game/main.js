@@ -10,8 +10,11 @@ function preload() {
     let spriteNames = ["down", "downRight", "right", "upRight", "up", "upLeft", "left", "downLeft"];
     Engine.AssetManager.addAsset(Engine.SpriteAtlas.load("../assets/idleAnimation.png", Engine.createVector(16, 32), spriteNames), "playerIdleAnimation");
     Engine.AssetManager.addAsset(Engine.SpriteAtlas.load("../assets/moveAnimation.png", Engine.createVector(16, 32), spriteNames), "playerMoveAnimation");
-    Engine.AssetManager.addAsset(Engine.SpriteAtlas.load("../assets/dashAnimation.png", Engine.createVector(16, 16), spriteNames), "playerDashAnimation");
+    Engine.AssetManager.addAsset(Engine.SpriteAtlas.load("../assets/dashAnimation.png", Engine.createVector(16, 32), spriteNames), "playerDashAnimation");
     Engine.AssetManager.addAsset(Engine.SpriteAtlas.load("../assets/deathAnimation.png", Engine.createVector(16, 32), ["death"]), "playerDeathAnimation");
+    Engine.AssetManager.addAsset(Engine.Sprite.load("../assets/enemy.png"), "enemy");
+    Engine.AssetManager.addAsset(Engine.Sprite.load("../assets/fireball.png"), "fireball");
+    Engine.AssetManager.addAsset(Engine.Sprite.load("../assets/waterball.png"), "waterball");
 }
 
 /**
@@ -21,8 +24,7 @@ function setup() {
     Engine.SceneManager.registerScene(new MainMenuScene(), "MainMenuScene");
     Engine.SceneManager.registerScene(new GameOverScene(), "GameOverScene");
     Engine.SceneManager.registerScene(new GameScene(), "GameScene");
-    // Engine.SceneManager.setEntryScene("MainMenuScene");
-    Engine.SceneManager.setEntryScene("GameOverScene");
+    Engine.SceneManager.setEntryScene("MainMenuScene");
 }
 
 Engine.initialize(preload, setup);
